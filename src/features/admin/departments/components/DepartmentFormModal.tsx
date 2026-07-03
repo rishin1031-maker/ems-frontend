@@ -24,9 +24,10 @@ interface DepartmentFormModalProps {
   open: boolean
   onClose: () => void
   department?: Department | null
+  onCreated?: (department: Department) => void
 }
 
-export function DepartmentFormModal({ open, onClose, department }: DepartmentFormModalProps) {
+export function DepartmentFormModal({ open, onClose, department, onCreated }: DepartmentFormModalProps) {
   const isEdit = Boolean(department)
   const { create, update } = useDepartmentMutations()
   const { success, error: toastError } = useToast()
@@ -60,8 +61,9 @@ export function DepartmentFormModal({ open, onClose, department }: DepartmentFor
         await update.mutateAsync({ id: department.id, payload: values })
         success('Department updated')
       } else {
-        await create.mutateAsync(values)
+        const created = await create.mutateAsync(values)
         success('Department created')
+        onCreated?.(created)
       }
       onClose()
     } catch (err) {

@@ -26,9 +26,17 @@ interface DesignationFormModalProps {
   open: boolean
   onClose: () => void
   designation?: Designation | null
+  defaultDepartmentId?: number
+  onCreated?: (designation: Designation) => void
 }
 
-export function DesignationFormModal({ open, onClose, designation }: DesignationFormModalProps) {
+export function DesignationFormModal({
+  open,
+  onClose,
+  designation,
+  defaultDepartmentId,
+  onCreated,
+}: DesignationFormModalProps) {
   const isEdit = Boolean(designation)
   const { create, update } = useDesignationMutations()
   const { data: deptData } = useDepartmentOptions()
@@ -54,9 +62,14 @@ export function DesignationFormModal({ open, onClose, designation }: Designation
         status: designation.status,
       })
     } else {
-      reset({ name: '', department_id: 0, description: '', status: 'active' })
+      reset({
+        name: '',
+        department_id: defaultDepartmentId ?? 0,
+        description: '',
+        status: 'active',
+      })
     }
-  }, [designation, reset, open])
+  }, [designation, defaultDepartmentId, reset, open])
 
   const deptOptions = (deptData?.items ?? []).map((d) => ({ value: d.id, label: d.name }))
 
@@ -66,8 +79,9 @@ export function DesignationFormModal({ open, onClose, designation }: Designation
         await update.mutateAsync({ id: designation.id, payload: values })
         success('Designation updated')
       } else {
-        await create.mutateAsync(values)
+        const created = await create.mutateAsync(values)
         success('Designation created')
+        onCreated?.(created)
       }
       onClose()
     } catch (err) {

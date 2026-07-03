@@ -7,8 +7,7 @@ import { Select } from '@/components/ui/Select'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { PageLoader } from '@/components/ui/Spinner'
-import { useDepartmentOptions } from '@/features/admin/departments/hooks/useDepartments'
-import { useDesignationOptions } from '@/features/admin/designations/hooks/useDesignations'
+import { EmployeeDeptDesigFields } from '@/features/admin/employees/components/EmployeeDeptDesigFields'
 import { useEmployeeMutations } from '@/features/admin/employees/hooks/useEmployeeMutations'
 import { useEmployee } from '@/features/admin/employees/hooks/useEmployees'
 import { useToast } from '@/components/feedback/ToastContext'
@@ -47,7 +46,7 @@ interface EmployeeFormProps {
 }
 
 function buildPayload(values: CreateFormValues | EditFormValues, imageFile?: File | null) {
-  const payload = {
+  return {
     name: values.name,
     email: values.email,
     phone: values.phone,
@@ -58,14 +57,11 @@ function buildPayload(values: CreateFormValues | EditFormValues, imageFile?: Fil
     status: values.status,
     image: imageFile ?? undefined,
   }
-  return payload
 }
 
 export function EmployeeForm({ mode, employeeId, onSuccess, onCancel }: EmployeeFormProps) {
   const isCreate = mode === 'create'
   const { data: employee, isLoading } = useEmployee(isCreate ? undefined : employeeId)
-  const { data: deptData } = useDepartmentOptions()
-  const { data: desigData } = useDesignationOptions()
   const { create, update } = useEmployeeMutations()
   const { success, error: toastError } = useToast()
 
@@ -78,17 +74,21 @@ export function EmployeeForm({ mode, employeeId, onSuccess, onCancel }: Employee
       gender: 'male',
       dob: '',
       status: 'active',
+      department_id: 0,
+      designation_id: 0,
     },
   })
 
   const editForm = useForm<EditFormValues>({
     resolver: zodResolver(editSchema),
-    defaultValues: { status: 'active', gender: 'male' },
+    defaultValues: { status: 'active', gender: 'male', department_id: 0, designation_id: 0 },
   })
 
-  const watchedDept = isCreate
-    ? createForm.watch('department_id')
-    : editForm.watch('department_id')
+  const form = isCreate ? createForm : editForm
+  const { register, handleSubmit, setValue, watch, formState: { errors } } = form
+
+  const departmentId = watch('department_id')
+  const designationId = watch('designation_id')
 
   useEffect(() => {
     if (employee && !isCreate) {
@@ -104,14 +104,6 @@ export function EmployeeForm({ mode, employeeId, onSuccess, onCancel }: Employee
       })
     }
   }, [employee, isCreate, editForm])
-
-  const deptOptions = (deptData?.items ?? []).map((d) => ({ value: d.id, label: d.name }))
-  const desigOptions = (desigData?.items ?? [])
-    .filter((d) => !watchedDept || d.department_id === watchedDept)
-    .map((d) => ({
-      value: d.id,
-      label: d.department_name ? `${d.name} (${d.department_name})` : d.name,
-    }))
 
   const onCreateSubmit = async (values: CreateFormValues) => {
     const imageInput = document.getElementById('employee-image') as HTMLInputElement | null
@@ -146,21 +138,45 @@ export function EmployeeForm({ mode, employeeId, onSuccess, onCancel }: Employee
     { value: 'other', label: 'Other' },
   ]
 
-  const formFields = (register: typeof createForm.register, errors: typeof createForm.formState.errors, showStatus: boolean) => (
+  const setDept = (id: number | '') => {
+    setValue('department_id', id === '' ? 0 : id, { shouldValidate: true })
+  }
+
+  const setDesig = (id: number | '') => {
+    setValue('designation_id', id === '' ? 0 : id, { shouldValidate: true })
+  }
+
+  const formFields = (showStatus: boolean) => (
     <>
       <Input label="Full Name" error={errors.name?.message} {...register('name')} />
       <Input label="Email" type="email" error={errors.email?.message} {...register('email')} />
       <Input label="Phone" error={errors.phone?.message} {...register('phone')} placeholder="10–15 digits" />
       <Select label="Gender" options={genderOptions} error={errors.gender?.message} {...register('gender')} />
       <Input label="Date of Birth" type="date" error={errors.dob?.message} {...register('dob')} />
-      <Select label="Department" placeholder="Select department" options={deptOptions} error={errors.department_id?.message} {...register('department_id')} />
-      <Select label="Designation" placeholder="Select designation" options={desigOptions} error={errors.designation_id?.message} {...register('designation_id')} />
+      <EmployeeDeptDesigFields
+        departmentId={departmentId}
+        designationId={designationId}
+        onDepartmentChange={setDept}
+        onDesignationChange={setDesig}
+        departmentError={errors.department_id?.message}
+        designationError={errors.designation_id?.message}
+      />
       {showStatus && (
-        <Select label="Status" options={[{ value: 'active', label: 'Active' }, { value: 'inactive', label: 'Inactive' }]} error={errors.status?.message} {...register('status')} />
+        <Select
+          label="Status"
+          options={[{ value: 'active', label: 'Active' }, { value: 'inactive', label: 'Inactive' }]}
+          error={errors.status?.message}
+          {...register('status')}
+        />
       )}
       <div className="sm:col-span-2">
         <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Profile Photo</label>
-        <input id="employee-image" type="file" accept="image/jpeg,image/png,image/webp" className="block w-full text-sm text-gray-500 file:mr-4 file:rounded-lg file:border-0 file:bg-indigo-50 file:px-4 file:py-2 file:text-sm file:font-medium file:text-indigo-700 hover:file:bg-indigo-100" />
+        <input
+          id="employee-image"
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          className="block w-full text-sm text-gray-500 file:mr-4 file:rounded-lg file:border-0 file:bg-indigo-50 file:px-4 file:py-2 file:text-sm file:font-medium file:text-indigo-700 hover:file:bg-indigo-100"
+        />
         {!isCreate && employee?.image_url && (
           <img src={employee.image_url} alt={employee.name} className="mt-2 h-16 w-16 rounded-full object-cover" />
         )}
@@ -169,14 +185,13 @@ export function EmployeeForm({ mode, employeeId, onSuccess, onCancel }: Employee
   )
 
   if (isCreate) {
-    const { register, handleSubmit, formState: { errors } } = createForm
     return (
       <Card>
         <p className="mb-4 text-sm text-gray-500">
           A temporary password will be generated and emailed to the employee automatically.
         </p>
         <form onSubmit={handleSubmit(onCreateSubmit)} className="grid gap-4 sm:grid-cols-2">
-          {formFields(register, errors, true)}
+          {formFields(true)}
           <div className="flex gap-3 sm:col-span-2">
             <Button type="submit" loading={create.isPending} theme="admin">Create Employee</Button>
             <Button type="button" variant="outline" onClick={onCancel} theme="admin">Cancel</Button>
@@ -186,11 +201,10 @@ export function EmployeeForm({ mode, employeeId, onSuccess, onCancel }: Employee
     )
   }
 
-  const { register, handleSubmit, formState: { errors } } = editForm
   return (
     <Card>
       <form onSubmit={handleSubmit(onEditSubmit)} className="grid gap-4 sm:grid-cols-2">
-        {formFields(register, errors, true)}
+        {formFields(true)}
         <div className="flex gap-3 sm:col-span-2">
           <Button type="submit" loading={update.isPending} theme="admin">Save Changes</Button>
           <Button type="button" variant="outline" onClick={onCancel} theme="admin">Cancel</Button>
