@@ -30,8 +30,9 @@ export function EmployeeFilters({ filters, onChange }: EmployeeFiltersProps) {
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       <div className="relative sm:col-span-2 lg:col-span-1">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+      <Search className="absolute left-3 top-4/6 h-4 w-4 -translate-y-1/2 text-gray-400" />
         <Input
+          label='Search'
           placeholder="Search name, email, ID..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
