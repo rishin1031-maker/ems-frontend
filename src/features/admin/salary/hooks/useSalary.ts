@@ -2,10 +2,11 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { adminSalaryApi, adminPayrollApi } from '@/api/admin/salary.api'
 import type { SalaryListParams, UpdateSalaryPayload, PayrollParams } from '@/api/types/salary'
 
-export function useSalaryList(params: SalaryListParams) {
+export function useSalaryList(params: SalaryListParams, enabled = true) {
   return useQuery({
     queryKey: ['admin', 'salary', params],
     queryFn: () => adminSalaryApi.list(params),
+    enabled,
   })
 }
 

@@ -71,11 +71,12 @@ export function EmployeeSalaryPage() {
 
   const onSubmit = async (values: FormValues) => {
     if (!employeeId) return
+    const adding = !data?.current
     try {
       await update.mutateAsync({ employeeId, payload: values })
-      success('Salary updated successfully')
+      success(adding ? 'Salary added successfully' : 'Salary updated successfully')
     } catch (err) {
-      toastError(applyApiErrors(err, setError) ?? 'Failed to update salary')
+      toastError(applyApiErrors(err, setError) ?? 'Failed to save salary')
     }
   }
 
@@ -83,11 +84,12 @@ export function EmployeeSalaryPage() {
   if (!data) return <p className="text-gray-500">Employee not found</p>
 
   const emp = data.employee
+  const isNew = !data.current
 
   return (
     <div>
       <PageHeader
-        title={`Manage Salary — ${emp.name}`}
+        title={`${isNew ? 'Add' : 'Manage'} Salary — ${emp.name}`}
         description={emp.employee_id}
         actions={
           <Button variant="outline" theme="admin" onClick={() => navigate('/admin/salary')}>
@@ -103,10 +105,15 @@ export function EmployeeSalaryPage() {
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
-          <CardHeader><CardTitle>Salary Breakdown</CardTitle></CardHeader>
+          <CardHeader><CardTitle>{isNew ? 'Salary Breakdown' : 'Update Salary'}</CardTitle></CardHeader>
           {data.current && (
             <p className="mb-4 text-sm text-gray-500">
               Current net: <span className="font-semibold text-green-700">{formatCurrency(data.current.net_salary)}</span>
+            </p>
+          )}
+          {!data.current && (
+            <p className="mb-4 text-sm text-amber-700 dark:text-amber-400">
+              This employee does not have a salary record yet. Fill in the breakdown below to add one.
             </p>
           )}
           <form onSubmit={handleSubmit(onSubmit)} className="grid gap-4 sm:grid-cols-2">
@@ -121,7 +128,9 @@ export function EmployeeSalaryPage() {
             <Input label="Effective From" type="date" error={errors.effective_from?.message} {...register('effective_from')} />
             <Input label="Note" placeholder="e.g. Annual increment" error={errors.note?.message} {...register('note')} />
             <div className="sm:col-span-2">
-              <Button type="submit" loading={update.isPending} theme="admin">Save Salary</Button>
+              <Button type="submit" loading={update.isPending} theme="admin">
+                {isNew ? 'Add Salary' : 'Save Salary'}
+              </Button>
             </div>
           </form>
         </Card>
@@ -142,7 +151,7 @@ export function EmployeeSalaryPage() {
       </div>
 
       {data.history.length > 0 && (
-        <Card className="mt-6">
+        <Card className="mt-6" id="history">
           <CardHeader><CardTitle>Salary History</CardTitle></CardHeader>
           <Table>
             <TableHead>

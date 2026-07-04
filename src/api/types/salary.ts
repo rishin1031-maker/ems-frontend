@@ -276,6 +276,19 @@ export function getSalaryEmployeeId(row: PayrollEmployeeRow | SalaryListRow): nu
   return row.employee_id ?? row.employee?.id ?? 0
 }
 
+export function buildPayrollEarnedMap(items: PayrollEmployeeRow[]): Map<number, PayrollEmployeeRow> {
+  const map = new Map<number, PayrollEmployeeRow>()
+  for (const item of items) {
+    const id = getSalaryEmployeeId(item)
+    if (id) map.set(id, item)
+  }
+  return map
+}
+
+export function employeeHasSalary(row: SalaryListRow): boolean {
+  return row.salary != null && (row.salary.net_salary != null || row.salary.basic != null)
+}
+
 export function filterPayrollBySearch(items: PayrollEmployeeRow[], search?: string): PayrollEmployeeRow[] {
   if (!search?.trim()) return items
   const q = search.toLowerCase()
