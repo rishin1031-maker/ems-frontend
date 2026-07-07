@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 import { Plus, Pencil, Trash2, KeyRound, Eye } from 'lucide-react'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/components/ui/Button'
@@ -26,13 +26,24 @@ import type { Employee } from '@/api/types/employee'
 import type { EmployeeListParams } from '@/api/types/employee'
 
 export function EmployeesListPage() {
-  const [filters, setFilters] = useState<EmployeeListParams>({ page: 1, per_page: 15 })
+  const [searchParams] = useSearchParams()
+  const initialSearch = searchParams.get('search') ?? ''
+  const [filters, setFilters] = useState<EmployeeListParams>({
+    page: 1,
+    per_page: 15,
+    search: initialSearch || undefined,
+  })
   const [deleteTarget, setDeleteTarget] = useState<Employee | null>(null)
   const [resetTarget, setResetTarget] = useState<Employee | null>(null)
 
   const { data, isLoading } = useEmployees(filters)
   const { remove } = useEmployeeMutations()
   const { success, error: toastError } = useToast()
+
+  useEffect(() => {
+    const q = searchParams.get('search') ?? ''
+    setFilters((prev) => ({ ...prev, search: q || undefined, page: 1 }))
+  }, [searchParams])
 
   const handleDelete = async () => {
     if (!deleteTarget) return

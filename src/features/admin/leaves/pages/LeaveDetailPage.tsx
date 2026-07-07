@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import { ArrowLeft, Check, X } from 'lucide-react'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/components/ui/Button'
@@ -15,10 +15,9 @@ import { getLeaveDays, getLeaveEndDate, getLeaveStartDate, getLeaveType } from '
 
 export function LeaveDetailPage() {
   const { id } = useParams<{ id: string }>()
-  const navigate = useNavigate()
   const { data: leave, isLoading } = useLeave(id)
   const { approve, reject } = useLeaveMutations()
-  const { success, error: toastError } = useToast()
+  const { error: toastError } = useToast()
 
   const [adminNote, setAdminNote] = useState('')
   const [action, setAction] = useState<'approve' | 'reject' | null>(null)
@@ -29,13 +28,11 @@ export function LeaveDetailPage() {
       const payload = adminNote ? { admin_note: adminNote } : undefined
       if (action === 'approve') {
         await approve.mutateAsync({ id, payload })
-        success('Leave approved')
       } else {
         await reject.mutateAsync({ id, payload })
-        success('Leave rejected')
       }
       setAction(null)
-      navigate('/admin/leaves')
+      setAdminNote('')
     } catch (err) {
       toastError((err as Error).message ?? 'Action failed')
     }
@@ -51,7 +48,7 @@ export function LeaveDetailPage() {
       <PageHeader
         title="Leave Details"
         actions={
-          <Button variant="outline" theme="admin" onClick={() => navigate('/admin/leaves')}>
+          <Button variant="outline" theme="admin" onClick={() => window.history.back()}>
             <ArrowLeft className="h-4 w-4" />
             Back
           </Button>

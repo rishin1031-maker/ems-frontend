@@ -11,6 +11,9 @@ import {
   Table, TableHead, TableBody, TableRow, TableHeader, TableCell,
 } from '@/components/ui/Table'
 import { EmptyState } from '@/components/feedback/EmptyState'
+import { EarlyCheckoutBadge } from '@/components/attendance/EarlyCheckoutBadge'
+import { AttendanceStreakBadge } from '@/components/attendance/AttendanceStreakBadge'
+import { computePresentStreak } from '@/lib/attendanceHelpers'
 import { useEmployeeMonthlyAttendance } from '@/features/employee/attendance/hooks/useEmployeeAttendance'
 import { formatDate, formatDateTime, currentMonth, statusLabel } from '@/lib/format'
 
@@ -20,6 +23,7 @@ export function AttendanceHistoryPage() {
 
   const items = data?.items ?? []
   const summary = data?.summary
+  const streak = computePresentStreak(items.map((r) => ({ date: r.date, status: r.status })))
 
   return (
     <div>
@@ -27,12 +31,15 @@ export function AttendanceHistoryPage() {
         title="My Attendance"
         description="Monthly attendance log"
         actions={
-          <Link to="/employee/attendance/charts">
+          <div className="flex flex-wrap items-center gap-2">
+            <AttendanceStreakBadge streak={streak} />
+            <Link to="/employee/attendance/charts">
             <Button variant="outline" theme="employee">
               <BarChart3 className="h-4 w-4" />
               Work hours chart
             </Button>
-          </Link>
+            </Link>
+          </div>
         }
       />
 
@@ -119,7 +126,10 @@ export function AttendanceHistoryPage() {
                 </TableCell>
                 <TableCell>
                   {row.status ? (
-                    <Badge variant={statusToBadgeVariant(row.status)}>{statusLabel(row.status)}</Badge>
+                    <div>
+                      <Badge variant={statusToBadgeVariant(row.status)}>{statusLabel(row.status)}</Badge>
+                      <EarlyCheckoutBadge note={row.note} isComplete={row.is_complete} netHours={row.net_hours_worked} />
+                    </div>
                   ) : (
                     '—'
                   )}

@@ -18,9 +18,9 @@ const variantStyles = {
 }
 
 const themePrimary = {
-  admin: 'bg-indigo-600 text-white hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600',
-  employee: 'bg-teal-600 text-white hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600',
-  neutral: 'bg-gray-900 text-white hover:bg-gray-800 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-white',
+  admin: 'bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600',
+  employee: 'bg-sky-600 text-white hover:bg-sky-700 dark:bg-sky-500 dark:hover:bg-sky-600',
+  neutral: 'bg-slate-900 text-white hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white',
 }
 
 const sizes = {
@@ -51,8 +51,8 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
         'disabled:pointer-events-none disabled:opacity-50',
         variant === 'primary' ? themePrimary[theme] : variantStyles[variant],
-        variant === 'primary' && theme === 'admin' && 'focus-visible:ring-indigo-500',
-        variant === 'primary' && theme === 'employee' && 'focus-visible:ring-teal-500',
+        variant === 'primary' && theme === 'admin' && 'focus-visible:ring-blue-500',
+        variant === 'primary' && theme === 'employee' && 'focus-visible:ring-sky-500',
         sizes[size],
         className,
       )}

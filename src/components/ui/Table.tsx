@@ -3,7 +3,7 @@ import { cn } from '@/lib/cn'
 
 export function Table({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <div className={cn('overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-800', className)}>
+    <div className={cn('overflow-x-auto', className)}>
       <table className="w-full min-w-[640px] text-left text-sm">{children}</table>
     </div>
   )
@@ -11,19 +11,19 @@ export function Table({ children, className }: { children: ReactNode; className?
 
 export function TableHead({ children }: { children: ReactNode }) {
   return (
-    <thead className="border-b border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900/50">
+    <thead className="border-b border-white/20 glass-table-head dark:border-white/10">
       {children}
     </thead>
   )
 }
 
 export function TableBody({ children }: { children: ReactNode }) {
-  return <tbody className="divide-y divide-gray-100 dark:divide-gray-800">{children}</tbody>
+  return <tbody className="divide-y divide-slate-100 dark:divide-slate-800">{children}</tbody>
 }
 
 export function TableRow({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <tr className={cn('bg-white transition-colors hover:bg-gray-50 dark:bg-gray-900 dark:hover:bg-gray-800/50', className)}>
+    <tr className={cn('glass-table-row', className)}>
       {children}
     </tr>
   )

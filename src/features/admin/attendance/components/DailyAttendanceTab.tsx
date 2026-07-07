@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { Coffee, X } from 'lucide-react'
+import { Coffee, X, Download } from 'lucide-react'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Button } from '@/components/ui/Button'
@@ -15,6 +15,8 @@ import { useAdminAttendanceMutations } from '@/features/admin/attendance/hooks/u
 import { useDepartmentOptions } from '@/features/admin/departments/hooks/useDepartments'
 import { useDesignationOptions } from '@/features/admin/designations/hooks/useDesignations'
 import { useToast } from '@/components/feedback/ToastContext'
+import { EarlyCheckoutBadge } from '@/components/attendance/EarlyCheckoutBadge'
+import { downloadExcelCsv } from '@/lib/exportCsv'
 import { useLiveTimer } from '@/hooks/useLiveTimer'
 import { useLiveBreakTimer } from '@/hooks/useLiveBreakTimer'
 import { adminAttendanceApi } from '@/api/admin/attendance.api'
@@ -194,6 +196,7 @@ function AttendanceManageRow({
                 ) : (
                   <p className="font-medium text-red-500">Short day</p>
                 )}
+                <EarlyCheckoutBadge note={row.note} isComplete={row.is_complete} netHours={row.net_hours_worked} />
               </div>
             )}
             {isWorkingLive && <LiveRowStats employeeId={row.employee_id} date={date} worker={liveWorker} />}
@@ -285,13 +288,40 @@ export function DailyAttendanceTab() {
   const deptOptions = (deptData?.items ?? []).map((d) => ({ value: d.id, label: d.name }))
   const desigOptions = (desigData?.items ?? []).map((d) => ({ value: d.id, label: d.name }))
 
+  const handleExport = () => {
+    const rows = data ?? []
+    downloadExcelCsv(
+      `attendance-${selectedDate}.csv`,
+      ['Employee ID', 'Name', 'Department', 'Status', 'Check In', 'Check Out', 'Net Hours', 'Early Checkout', 'Note'],
+      rows.map((row) => [
+        row.employee?.employee_id ?? '',
+        row.employee?.name ?? '',
+        row.employee?.department?.name ?? '',
+        row.status ?? '',
+        row.check_in ?? '',
+        row.check_out ?? '',
+        row.net_hours_worked ?? '',
+        row.is_complete === false ? 'Yes' : 'No',
+        row.note ?? '',
+      ]),
+    )
+  }
+
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div className="grid flex-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Input label="Date" type="date" value={selectedDate} onChange={(e) => setParams({ ...params, date: e.target.value })} />
         <Input label="Search" placeholder="Name or ID..." value={params.search ?? ''} onChange={(e) => setParams({ ...params, search: e.target.value || undefined })} />
         <Select label="Department" placeholder="All" options={deptOptions} value={params.department_id ?? ''} onChange={(e) => setParams({ ...params, department_id: e.target.value ? Number(e.target.value) : undefined })} />
         <Select label="Designation" placeholder="All" options={desigOptions} value={params.designation_id ?? ''} onChange={(e) => setParams({ ...params, designation_id: e.target.value ? Number(e.target.value) : undefined })} />
+        </div>
+        {!isLoading && (data?.length ?? 0) > 0 && (
+          <Button variant="outline" theme="admin" onClick={handleExport}>
+            <Download className="h-4 w-4" />
+            Export CSV
+          </Button>
+        )}
       </div>
 
       {isLoading ? (

@@ -1,17 +1,19 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Plus, Trash2 } from 'lucide-react'
+import { Plus, Trash2, LayoutList, CalendarDays } from 'lucide-react'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/components/ui/Button'
 import { Select } from '@/components/ui/Select'
 import { Badge, statusToBadgeVariant } from '@/components/ui/Badge'
 import { Pagination } from '@/components/ui/Pagination'
 import { PageLoader } from '@/components/ui/Spinner'
+import { LeaveCalendarSkeleton } from '@/components/ui/Skeleton'
 import {
   Table, TableHead, TableBody, TableRow, TableHeader, TableCell,
 } from '@/components/ui/Table'
 import { EmptyState } from '@/components/feedback/EmptyState'
 import { ConfirmDialog } from '@/components/feedback/ConfirmDialog'
+import { LeaveCalendarView } from '@/components/leaves/LeaveCalendarView'
 import { LeaveBalanceCard } from '@/features/employee/dashboard/components/LeaveBalanceCard'
 import {
   useEmployeeLeaves,
@@ -30,12 +32,20 @@ import {
 import { LEAVE_STATUSES, type LeaveStatus } from '@/lib/constants'
 import { LEAVE_TYPES, type LeaveType } from '@/lib/constants'
 import type { EmployeeLeaveListParams } from '@/api/employee/leaves.api'
+import { cn } from '@/lib/cn'
+
+type ViewMode = 'list' | 'calendar'
 
 export function EmployeeLeavesPage() {
   const [filters, setFilters] = useState<EmployeeLeaveListParams>({ page: 1, per_page: 15 })
   const [cancelTarget, setCancelTarget] = useState<Leave | null>(null)
+  const [view, setView] = useState<ViewMode>('list')
 
-  const { data, isLoading } = useEmployeeLeaves(filters)
+  const listParams = view === 'calendar'
+    ? { ...filters, page: 1, per_page: 200 }
+    : filters
+
+  const { data, isLoading } = useEmployeeLeaves(listParams)
   const { data: balance } = useLeaveBalance()
   const { cancel } = useEmployeeLeaveMutations()
   const { success, error: toastError } = useToast()
@@ -59,12 +69,42 @@ export function EmployeeLeavesPage() {
         title="My Leaves"
         description="View and manage your leave requests"
         actions={
-          <Link to="/employee/leaves/apply">
-            <Button theme="employee">
-              <Plus className="h-4 w-4" />
-              Apply Leave
-            </Button>
-          </Link>
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex rounded-xl border border-slate-200 p-0.5 dark:border-slate-700">
+              <button
+                type="button"
+                onClick={() => setView('list')}
+                className={cn(
+                  'flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition',
+                  view === 'list'
+                    ? 'bg-sky-600 text-white shadow-sm'
+                    : 'text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800',
+                )}
+              >
+                <LayoutList className="h-4 w-4" />
+                List
+              </button>
+              <button
+                type="button"
+                onClick={() => setView('calendar')}
+                className={cn(
+                  'flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition',
+                  view === 'calendar'
+                    ? 'bg-sky-600 text-white shadow-sm'
+                    : 'text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800',
+                )}
+              >
+                <CalendarDays className="h-4 w-4" />
+                Calendar
+              </button>
+            </div>
+            <Link to="/employee/leaves/apply">
+              <Button theme="employee">
+                <Plus className="h-4 w-4" />
+                Apply Leave
+              </Button>
+            </Link>
+          </div>
         }
       />
 
@@ -86,18 +126,18 @@ export function EmployeeLeavesPage() {
         <div className="mb-6 max-w-xl">
           <Select
             label="Type"
-            placeholder="All Type"
+            placeholder="All types"
             options={LEAVE_TYPES.map((s) => ({ value: s, label: statusLabel(s) }))}
-            value={filters.status ?? ''}
+            value={filters.type ?? ''}
             onChange={(e) =>
               setFilters({ ...filters, type: (e.target.value as LeaveType) || undefined, page: 1 })
             }
           />
         </div>
-        </div>
+      </div>
 
       {isLoading ? (
-        <PageLoader />
+        view === 'calendar' ? <LeaveCalendarSkeleton /> : <PageLoader />
       ) : items.length === 0 ? (
         <EmptyState
           action={
@@ -106,6 +146,8 @@ export function EmployeeLeavesPage() {
             </Link>
           }
         />
+      ) : view === 'calendar' ? (
+        <LeaveCalendarView leaves={items} theme="employee" />
       ) : (
         <>
           <Table>

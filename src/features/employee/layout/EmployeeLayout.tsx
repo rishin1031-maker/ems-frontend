@@ -8,7 +8,10 @@ import {
   CalendarDays,
   Bell,
 } from 'lucide-react'
+import { GlassShell } from '@/components/layout/GlassShell'
 import { Header } from '@/components/layout/Header'
+import { CommandPalette } from '@/components/layout/CommandPalette'
+import { CommandPaletteProvider } from '@/components/layout/CommandPaletteContext'
 import { Sidebar, type NavItem } from '@/components/layout/Sidebar'
 import { useAuth } from '@/features/auth/hooks/useAuth'
 import { ROLES } from '@/lib/constants'
@@ -23,31 +26,36 @@ const navItems: NavItem[] = [
 ]
 
 export function EmployeeLayout() {
-  const { user, logout } = useAuth()
+  const { logout } = useAuth()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [collapsed, setCollapsed] = useState(false)
 
   return (
-    <div className="flex min-h-screen bg-gray-50 dark:bg-gray-950">
-      <Sidebar
-        items={navItems}
-        title="Employee Portal"
-        subtitle={user?.employee_id as string | undefined}
-        theme="employee"
-        open={sidebarOpen}
-        onClose={() => setSidebarOpen(false)}
-      />
-      <div className="flex min-w-0 flex-1 flex-col">
-        <Header
-          userName={user?.name}
-          onMenuClick={() => setSidebarOpen(true)}
-          onLogout={() => void logout()}
-          theme="employee"
-          role={ROLES.EMPLOYEE}
-        />
-        <main className="flex-1 overflow-auto p-4 lg:p-6">
-          <Outlet />
-        </main>
-      </div>
-    </div>
+    <CommandPaletteProvider>
+      <GlassShell variant="employee">
+        <div className="relative z-10 flex min-h-screen">
+          <Sidebar
+            items={navItems}
+            theme="employee"
+            open={sidebarOpen}
+            collapsed={collapsed}
+            onClose={() => setSidebarOpen(false)}
+            onToggleCollapse={() => setCollapsed((v) => !v)}
+          />
+          <div className="flex min-w-0 flex-1 flex-col">
+            <Header
+              onMenuClick={() => setSidebarOpen(true)}
+              onLogout={() => void logout()}
+              theme="employee"
+              role={ROLES.EMPLOYEE}
+            />
+            <main className="flex-1 overflow-auto p-4 lg:p-8">
+              <Outlet />
+            </main>
+          </div>
+          <CommandPalette role={ROLES.EMPLOYEE} />
+        </div>
+      </GlassShell>
+    </CommandPaletteProvider>
   )
 }

@@ -37,7 +37,7 @@ export function ToastContainer({ toasts, onDismiss }: ToastContainerProps) {
           <div
             key={toast.id}
             className={cn(
-              'flex items-start gap-3 rounded-lg border px-4 py-3 shadow-lg',
+              'flex items-start gap-3 rounded-xl glass-panel px-4 py-3 shadow-lg',
               styles[toast.type],
             )}
             role="alert"

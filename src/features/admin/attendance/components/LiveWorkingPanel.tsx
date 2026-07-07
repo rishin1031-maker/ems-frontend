@@ -7,8 +7,9 @@ import { PageLoader } from '@/components/ui/Spinner'
 import { useLiveStatus } from '@/features/admin/attendance/hooks/useAttendance'
 import { useLiveTimer } from '@/hooks/useLiveTimer'
 import { useLiveBreakTimer } from '@/hooks/useLiveBreakTimer'
+import { LiveTimerDisplay } from '@/components/ui/LiveTimerDisplay'
 import { adminAttendanceApi } from '@/api/admin/attendance.api'
-import { formatLiveTimer, todayISO } from '@/lib/format'
+import { todayISO, formatLiveTimer } from '@/lib/format'
 import { TARGET_WORK_SECONDS } from '@/lib/constants'
 import type { LiveWorkingEmployee } from '@/api/types/attendance'
 
@@ -45,10 +46,10 @@ function LiveEmployeeCard({ item, date }: { item: LiveWorkingEmployee; date: str
   )
 
   return (
-    <div className="rounded-lg border border-gray-200 p-4 dark:border-gray-800">
-      <div className="mb-2 flex items-center justify-between">
+    <div className="rounded-xl bg-gray-50/80 p-4 dark:bg-gray-800/40">
+      <div className="mb-3 flex items-center justify-between">
         <div>
-          <p className="font-medium">{item.employee?.name ?? 'Employee'}</p>
+          <p className="font-medium text-gray-900 dark:text-gray-100">{item.employee?.name ?? 'Employee'}</p>
           <p className="text-xs text-gray-500">{item.employee?.employee_id}</p>
         </div>
         {item.is_on_break ? (
@@ -59,11 +60,14 @@ function LiveEmployeeCard({ item, date }: { item: LiveWorkingEmployee; date: str
           <Badge variant="info"><Clock className="mr-1 inline h-3 w-3" />Working</Badge>
         )}
       </div>
-      <p className="mb-1 font-mono text-2xl font-bold text-indigo-600 dark:text-indigo-400">
-        {formatLiveTimer(seconds)}
-      </p>
-      <p className="mb-2 text-xs text-orange-500">
-        Break: {formatLiveTimer(breakSeconds)}
+      <LiveTimerDisplay
+        seconds={seconds}
+        label="Net work"
+        variant={item.is_on_break ? 'break' : 'work'}
+        size="md"
+      />
+      <p className="mb-3 mt-2 font-mono text-xs tabular-nums text-orange-500">
+        Break {formatLiveTimer(breakSeconds)}
       </p>
       <ProgressBar value={seconds} max={TARGET_WORK_SECONDS} showTimer={false} />
     </div>

@@ -12,6 +12,17 @@ export interface EmployeeDashboardData {
   pending_leaves?: number
   recent_attendance?: Record<string, unknown>[]
   recent_leaves?: Record<string, unknown>[]
+  monthly_earnings?: {
+    month?: string
+    work_hours?: number
+    target_hours?: number
+    progress_percent?: number
+    base_net?: number
+    earned_net?: number
+    remaining_hours?: number
+    is_full_month?: boolean
+  } | null
+  current_salary?: Record<string, unknown> | null
 }
 
 export const employeeDashboardApi = {

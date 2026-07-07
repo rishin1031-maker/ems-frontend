@@ -92,7 +92,7 @@ export const adminAttendanceApi = {
     return normalizeAdminAttendanceChart(raw)
   },
 
-  liveStatus: async (params?: { date?: string }) => {
+  liveStatus: async (params?: { date?: string; search?: string; department_id?: number | string; designation_id?: number | string }) => {
     const raw = await apiGet<{
       is_today?: boolean
       count?: number

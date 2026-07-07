@@ -32,7 +32,7 @@ interface CreateLeaveModalProps {
 
 export function CreateLeaveModal({ open, onClose }: CreateLeaveModalProps) {
   const { create } = useLeaveMutations()
-  const { success, error: toastError } = useToast()
+  const { error: toastError } = useToast()
 
   const { data: employeesData } = useQuery({
     queryKey: ['admin', 'employees', 'options'],
@@ -63,7 +63,6 @@ export function CreateLeaveModal({ open, onClose }: CreateLeaveModalProps) {
   const onSubmit = async (values: FormValues) => {
     try {
       await create.mutateAsync(values)
-      success('Leave created successfully')
       onClose()
     } catch (err) {
       toastError(applyApiErrors(err, setError) ?? 'Failed to create leave')

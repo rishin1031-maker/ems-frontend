@@ -1,5 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { LIVE_STATUS_POLL_MS, LIVE_TIMER_TICK_MS } from '@/lib/constants'
+import {
+  computeWorkDisplay,
+  createAnchor,
+  syncWorkAnchor,
+  type TimerAnchor,
+} from '@/hooks/liveTimerEngine'
 
 interface LiveTimerInput {
   net_seconds: number
@@ -7,56 +13,59 @@ interface LiveTimerInput {
 }
 
 /**
- * Polls server net_seconds and ticks display every 1s when working (not on break).
+ * Extrapolates net work seconds locally every tick; re-anchors on poll without visible jumps.
  */
 export function useLiveTimer(
   liveStats: LiveTimerInput | null | undefined,
   pollFn: () => Promise<LiveTimerInput | null>,
 ) {
   const [displaySeconds, setDisplaySeconds] = useState(0)
-  const baseRef = useRef({ net: 0, fetchedAt: Date.now(), onBreak: false })
+  const anchorRef = useRef<TimerAnchor>(createAnchor())
+  const pollFnRef = useRef(pollFn)
+  pollFnRef.current = pollFn
+
+  const applySync = (netSeconds: number, isOnBreak: boolean) => {
+    const { anchor, forceDisplay } = syncWorkAnchor(anchorRef.current, netSeconds, isOnBreak)
+    anchorRef.current = anchor
+    if (forceDisplay != null) setDisplaySeconds(forceDisplay)
+  }
 
   useEffect(() => {
-    if (!liveStats) return
-    baseRef.current = {
-      net: liveStats.net_seconds ?? 0,
-      fetchedAt: Date.now(),
-      onBreak: Boolean(liveStats.is_on_break),
+    if (!liveStats) {
+      anchorRef.current = createAnchor()
+      setDisplaySeconds(0)
+      return
     }
-    setDisplaySeconds(baseRef.current.net)
-  }, [liveStats])
+    applySync(liveStats.net_seconds ?? 0, Boolean(liveStats.is_on_break))
+  }, [liveStats?.net_seconds, liveStats?.is_on_break, liveStats])
 
   useEffect(() => {
-    const tick = setInterval(() => {
-      const { net, fetchedAt, onBreak } = baseRef.current
-      if (onBreak) {
-        setDisplaySeconds(net)
-        return
-      }
-      const elapsed = Math.floor((Date.now() - fetchedAt) / 1000)
-      setDisplaySeconds(net + elapsed)
-    }, LIVE_TIMER_TICK_MS)
-    return () => clearInterval(tick)
+    const tick = () => setDisplaySeconds(computeWorkDisplay(anchorRef.current))
+    tick()
+    const id = setInterval(tick, LIVE_TIMER_TICK_MS)
+    return () => clearInterval(id)
   }, [])
 
   useEffect(() => {
-    const poll = setInterval(async () => {
+    let cancelled = false
+
+    const poll = async () => {
       try {
-        const data = await pollFn()
-        if (data) {
-          baseRef.current = {
-            net: data.net_seconds ?? 0,
-            fetchedAt: Date.now(),
-            onBreak: Boolean(data.is_on_break),
-          }
-          setDisplaySeconds(baseRef.current.net)
-        }
+        const data = await pollFnRef.current()
+        if (!data || cancelled) return
+        applySync(data.net_seconds ?? 0, Boolean(data.is_on_break))
       } catch {
-        // ignore poll errors
+        // keep extrapolating
       }
-    }, LIVE_STATUS_POLL_MS)
-    return () => clearInterval(poll)
-  }, [pollFn])
+    }
+
+    void poll()
+    const id = setInterval(() => void poll(), LIVE_STATUS_POLL_MS)
+    return () => {
+      cancelled = true
+      clearInterval(id)
+    }
+  }, [])
 
   return displaySeconds
 }

@@ -57,6 +57,15 @@ const EmployeeSalaryPage = lazy(
 const PayrollPage = lazy(
   () => import('@/features/admin/payroll/pages/PayrollPage').then((m) => ({ default: m.PayrollPage })),
 )
+const ActivityLogPage = lazy(
+  () => import('@/features/admin/activity-log/pages/ActivityLogPage').then((m) => ({ default: m.ActivityLogPage })),
+)
+const ApprovalInboxPage = lazy(
+  () => import('@/features/admin/inbox/pages/ApprovalInboxPage').then((m) => ({ default: m.ApprovalInboxPage })),
+)
+const TeamOverviewPage = lazy(
+  () => import('@/features/admin/team/pages/TeamOverviewPage').then((m) => ({ default: m.TeamOverviewPage })),
+)
 const ProfilePage = lazy(
   () => import('@/features/employee/profile/pages/ProfilePage').then((m) => ({ default: m.ProfilePage })),
 )
@@ -211,6 +220,30 @@ export const router = createBrowserRouter([
                 element: (
                   <Lazy>
                     <PayrollPage />
+                  </Lazy>
+                ),
+              },
+              {
+                path: 'activity-log',
+                element: (
+                  <Lazy>
+                    <ActivityLogPage />
+                  </Lazy>
+                ),
+              },
+              {
+                path: 'inbox',
+                element: (
+                  <Lazy>
+                    <ApprovalInboxPage />
+                  </Lazy>
+                ),
+              },
+              {
+                path: 'team',
+                element: (
+                  <Lazy>
+                    <TeamOverviewPage />
                   </Lazy>
                 ),
               },

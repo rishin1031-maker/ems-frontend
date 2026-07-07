@@ -4,7 +4,7 @@ import { StatCard } from '@/components/layout/StatCard'
 import { Select } from '@/components/ui/Select'
 import { Input } from '@/components/ui/Input'
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card'
-import { PageLoader } from '@/components/ui/Spinner'
+import { ChartReportSkeleton } from '@/components/ui/Skeleton'
 import { AdminAttendanceCharts } from '@/components/ui/AdminAttendanceCharts'
 import { LiveWorkingPanel } from '@/features/admin/attendance/components/LiveWorkingPanel'
 import { useAttendanceCharts } from '@/features/admin/attendance/hooks/useAttendance'
@@ -102,7 +102,7 @@ export function AnalyticsAttendanceTab() {
       </Card>
 
       {chartLoading ? (
-        <PageLoader />
+        <ChartReportSkeleton />
       ) : (
         <>
           {summary && (

@@ -8,11 +8,18 @@ import { PageHeader } from '@/components/layout/PageHeader'
 import { StatCard } from '@/components/layout/StatCard'
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card'
 import { ProgressBar } from '@/components/ui/ProgressBar'
+import { LiveTimerDisplay } from '@/components/ui/LiveTimerDisplay'
 import { PageLoader } from '@/components/ui/Spinner'
+import { LeaveCalendarSkeleton } from '@/components/ui/Skeleton'
+import { LeaveCalendarView } from '@/components/leaves/LeaveCalendarView'
+import { useEmployeeLeaves } from '@/features/employee/leaves/hooks/useEmployeeLeaves'
 import { Badge, statusToBadgeVariant } from '@/components/ui/Badge'
 import { AttendanceControls } from '@/features/employee/dashboard/components/AttendanceControls'
 import { EarlyCheckoutModal } from '@/features/employee/dashboard/components/EarlyCheckoutModal'
 import { LeaveBalanceCard } from '@/features/employee/dashboard/components/LeaveBalanceCard'
+import { EarningProgressRing } from '@/components/salary/EarningProgressRing'
+import { AttendanceStreakBadge } from '@/components/attendance/AttendanceStreakBadge'
+import { computePresentStreak } from '@/lib/attendanceHelpers'
 import { useEmployeeLiveStatus } from '@/features/employee/attendance/hooks/useEmployeeAttendance'
 import { useLiveTimer } from '@/hooks/useLiveTimer'
 import { useLiveBreakTimer } from '@/hooks/useLiveBreakTimer'
@@ -50,6 +57,11 @@ export function EmployeeDashboardPage() {
     refetchInterval: 30_000,
   })
 
+  const { data: leavesData, isLoading: leavesLoading } = useEmployeeLeaves({
+    page: 1,
+    per_page: 200,
+  })
+
   const { data: livePoll } = useEmployeeLiveStatus()
 
   const live: EmployeeLiveStats | null = livePoll ?? data?.live_stats ?? null
@@ -83,34 +95,47 @@ export function EmployeeDashboardPage() {
 
   if (isLoading) return <PageLoader />
 
+  const streak = computePresentStreak(
+    (data?.recent_attendance ?? []).map((a) => ({
+      date: String(a.date ?? ''),
+      status: String(a.status ?? ''),
+    })),
+  )
+
   return (
     <div>
-      <PageHeader title="Dashboard" description="Your attendance overview for today" />
+      <PageHeader
+        title="Dashboard"
+        description="Your attendance overview for today"
+        actions={<AttendanceStreakBadge streak={streak} />}
+      />
 
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>Today&apos;s Attendance</CardTitle>
+      <Card className="mb-6 overflow-hidden">
+        <CardHeader className="border-b border-gray-100 pb-4 dark:border-gray-800/80">
+          <CardTitle className="text-base font-medium">Today&apos;s attendance</CardTitle>
         </CardHeader>
 
         {isCheckedIn && !live?.checked_out && (
-          <div className="mb-4 flex flex-wrap gap-4">
-            <div className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-2 text-center dark:border-gray-800 dark:bg-gray-900/50">
-              <p className="text-xs text-gray-500">Net work time</p>
-              <p className={`font-mono text-xl font-bold ${isOnBreak ? 'text-orange-400' : 'text-indigo-600'}`}>
-                {formatLiveTimer(netSeconds)}
-              </p>
-              <p className={`text-xs ${isOnBreak ? 'text-orange-500' : 'text-green-500'}`}>
-                {isOnBreak ? 'On break — timer paused' : 'Working'}
-              </p>
+          <div className="mb-6 grid gap-3 sm:grid-cols-2">
+            <div className="rounded-xl bg-gray-50/80 px-5 py-4 dark:bg-gray-800/40">
+              <LiveTimerDisplay
+                seconds={netSeconds}
+                label="Net work"
+                status={isOnBreak ? 'On break — paused' : 'Working'}
+                variant={isOnBreak ? 'break' : 'work'}
+              />
             </div>
-            <div className="rounded-xl border border-orange-100 bg-orange-50 px-4 py-2 text-center dark:border-orange-900 dark:bg-orange-950/30">
-              <p className="text-xs text-gray-500">Total break</p>
-              <p className="font-mono text-xl font-bold text-orange-500">{formatLiveTimer(breakSeconds)}</p>
+            <div className="rounded-xl bg-orange-50/50 px-5 py-4 dark:bg-orange-950/20">
+              <LiveTimerDisplay
+                seconds={breakSeconds}
+                label="Break total"
+                variant="break"
+              />
             </div>
           </div>
         )}
 
-        <ProgressBar value={netSeconds} max={targetSeconds} showTimer completeClass="bg-green-500" className="mb-4" />
+        <ProgressBar value={netSeconds} max={targetSeconds} showTimer completeClass="bg-green-500" className="mb-5" />
         <AttendanceControls liveStats={live} onEarlyCheckout={() => setEarlyCheckoutOpen(true)} />
       </Card>
 
@@ -181,9 +206,27 @@ export function EmployeeDashboardPage() {
         </Card>
       </div>
 
-      <div className="mt-6">
+      <div className="mt-6 grid gap-6 lg:grid-cols-2">
+        <EarningProgressRing earnings={data?.monthly_earnings} theme="employee" />
         <LeaveBalanceCard balance={data?.leave_balance} />
       </div>
+
+      <Card className="mt-6">
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <div>
+            <CardTitle className="text-base font-semibold">Leave Calendar</CardTitle>
+            <p className="text-xs text-slate-500">Your leave schedule · scroll through months</p>
+          </div>
+          <Link to="/employee/leaves" className="text-xs font-medium text-sky-600 hover:underline">
+            View all
+          </Link>
+        </CardHeader>
+        {leavesLoading ? (
+          <LeaveCalendarSkeleton />
+        ) : (
+          <LeaveCalendarView leaves={leavesData?.items ?? []} theme="employee" />
+        )}
+      </Card>
 
       <EarlyCheckoutModal
         open={earlyCheckoutOpen}

@@ -35,17 +35,17 @@ export function Modal({ open, onClose, title, description, children, size = 'md'
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} aria-hidden />
+      <div className="absolute inset-0 glass-overlay" onClick={onClose} aria-hidden />
       <div
         role="dialog"
         aria-modal
         aria-labelledby="modal-title"
         className={cn(
-          'relative z-10 w-full rounded-xl border border-gray-200 bg-white shadow-xl dark:border-gray-800 dark:bg-gray-900',
+          'relative z-10 w-full rounded-2xl glass-panel-strong shadow-2xl',
           sizes[size],
         )}
       >
-        <div className="flex items-start justify-between border-b border-gray-200 px-6 py-4 dark:border-gray-800">
+        <div className="flex items-start justify-between border-b border-white/20 px-6 py-4 dark:border-white/10">
           <div>
             <h2 id="modal-title" className="text-lg font-semibold text-gray-900 dark:text-gray-100">
               {title}
@@ -57,7 +57,7 @@ export function Modal({ open, onClose, title, description, children, size = 'md'
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-1 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800"
+            className="rounded-lg p-1 text-gray-500 glass-nav-hover"
             aria-label="Close"
           >
             <X className="h-5 w-5" />

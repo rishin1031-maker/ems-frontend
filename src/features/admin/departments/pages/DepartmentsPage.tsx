@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { Plus, Pencil, Trash2, ToggleLeft, ToggleRight } from 'lucide-react'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/components/ui/Button'
@@ -24,8 +25,9 @@ import { statusLabel } from '@/lib/format'
 import type { Department } from '@/api/types/department'
 
 export function DepartmentsPage() {
+  const [searchParams] = useSearchParams()
   const [page, setPage] = useState(1)
-  const [search, setSearch] = useState('')
+  const [search, setSearch] = useState(() => searchParams.get('search') ?? '')
   const [formOpen, setFormOpen] = useState(false)
   const [editTarget, setEditTarget] = useState<Department | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Department | null>(null)
@@ -33,6 +35,11 @@ export function DepartmentsPage() {
   const { data, isLoading } = useDepartments({ page, search: search || undefined })
   const { remove, toggleStatus } = useDepartmentMutations()
   const { success, error: toastError } = useToast()
+
+  useEffect(() => {
+    const q = searchParams.get('search')
+    if (q != null) setSearch(q)
+  }, [searchParams])
 
   const openCreate = () => {
     setEditTarget(null)

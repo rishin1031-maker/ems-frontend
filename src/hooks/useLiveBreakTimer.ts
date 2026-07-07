@@ -1,5 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { LIVE_STATUS_POLL_MS, LIVE_TIMER_TICK_MS } from '@/lib/constants'
+import {
+  computeBreakDisplay,
+  createAnchor,
+  syncBreakAnchor,
+  type TimerAnchor,
+} from '@/hooks/liveTimerEngine'
 
 interface LiveBreakInput {
   total_break_seconds?: number
@@ -7,56 +13,59 @@ interface LiveBreakInput {
 }
 
 /**
- * Ticks break timer when on break; holds static total when working.
+ * Extrapolates break seconds locally while on break; re-anchors on poll without visible jumps.
  */
 export function useLiveBreakTimer(
   liveStats: LiveBreakInput | null | undefined,
   pollFn: () => Promise<LiveBreakInput | null>,
 ) {
   const [displaySeconds, setDisplaySeconds] = useState(0)
-  const baseRef = useRef({ break: 0, fetchedAt: Date.now(), onBreak: false })
+  const anchorRef = useRef<TimerAnchor>(createAnchor())
+  const pollFnRef = useRef(pollFn)
+  pollFnRef.current = pollFn
+
+  const applySync = (breakSeconds: number, isOnBreak: boolean) => {
+    const { anchor, forceDisplay } = syncBreakAnchor(anchorRef.current, breakSeconds, isOnBreak)
+    anchorRef.current = anchor
+    if (forceDisplay != null) setDisplaySeconds(forceDisplay)
+  }
 
   useEffect(() => {
-    if (!liveStats) return
-    baseRef.current = {
-      break: liveStats.total_break_seconds ?? 0,
-      fetchedAt: Date.now(),
-      onBreak: Boolean(liveStats.is_on_break),
+    if (!liveStats) {
+      anchorRef.current = createAnchor()
+      setDisplaySeconds(0)
+      return
     }
-    setDisplaySeconds(baseRef.current.break)
-  }, [liveStats])
+    applySync(liveStats.total_break_seconds ?? 0, Boolean(liveStats.is_on_break))
+  }, [liveStats?.total_break_seconds, liveStats?.is_on_break, liveStats])
 
   useEffect(() => {
-    const tick = setInterval(() => {
-      const { break: base, fetchedAt, onBreak } = baseRef.current
-      if (!onBreak) {
-        setDisplaySeconds(base)
-        return
-      }
-      const elapsed = Math.floor((Date.now() - fetchedAt) / 1000)
-      setDisplaySeconds(base + elapsed)
-    }, LIVE_TIMER_TICK_MS)
-    return () => clearInterval(tick)
+    const tick = () => setDisplaySeconds(computeBreakDisplay(anchorRef.current))
+    tick()
+    const id = setInterval(tick, LIVE_TIMER_TICK_MS)
+    return () => clearInterval(id)
   }, [])
 
   useEffect(() => {
-    const poll = setInterval(async () => {
+    let cancelled = false
+
+    const poll = async () => {
       try {
-        const data = await pollFn()
-        if (data) {
-          baseRef.current = {
-            break: data.total_break_seconds ?? 0,
-            fetchedAt: Date.now(),
-            onBreak: Boolean(data.is_on_break),
-          }
-          setDisplaySeconds(baseRef.current.break)
-        }
+        const data = await pollFnRef.current()
+        if (!data || cancelled) return
+        applySync(data.total_break_seconds ?? 0, Boolean(data.is_on_break))
       } catch {
-        // ignore
+        // keep extrapolating
       }
-    }, LIVE_STATUS_POLL_MS)
-    return () => clearInterval(poll)
-  }, [pollFn])
+    }
+
+    void poll()
+    const id = setInterval(() => void poll(), LIVE_STATUS_POLL_MS)
+    return () => {
+      cancelled = true
+      clearInterval(id)
+    }
+  }, [])
 
   return displaySeconds
 }

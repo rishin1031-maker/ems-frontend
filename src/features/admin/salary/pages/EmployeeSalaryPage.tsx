@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card'
 import { PageLoader } from '@/components/ui/Spinner'
+import { PayslipBreakdown } from '@/components/salary/PayslipBreakdown'
 import {
   Table, TableHead, TableBody, TableRow, TableHeader, TableCell,
 } from '@/components/ui/Table'
@@ -38,7 +39,7 @@ export function EmployeeSalaryPage() {
   const navigate = useNavigate()
   const { data, isLoading } = useEmployeeSalary(employeeId)
   const { update } = useSalaryMutations()
-  const { success, error: toastError } = useToast()
+  const { error: toastError } = useToast()
 
   const {
     register,
@@ -74,7 +75,6 @@ export function EmployeeSalaryPage() {
     const adding = !data?.current
     try {
       await update.mutateAsync({ employeeId, payload: values })
-      success(adding ? 'Salary added successfully' : 'Salary updated successfully')
     } catch (err) {
       toastError(applyApiErrors(err, setError) ?? 'Failed to save salary')
     }
@@ -135,19 +135,17 @@ export function EmployeeSalaryPage() {
           </form>
         </Card>
 
-        <Card>
-          <CardHeader><CardTitle>Employee</CardTitle></CardHeader>
-          <dl className="space-y-2 text-sm">
-            <div className="flex justify-between"><dt className="text-gray-500">Department</dt><dd>{emp.department?.name ?? '—'}</dd></div>
-            <div className="flex justify-between"><dt className="text-gray-500">Designation</dt><dd>{emp.designation?.name ?? '—'}</dd></div>
-            {data.current && (
-              <>
-                <div className="flex justify-between"><dt className="text-gray-500">Gross</dt><dd>{formatCurrency(data.current.gross_salary)}</dd></div>
-                <div className="flex justify-between"><dt className="text-gray-500">Net</dt><dd className="font-bold text-indigo-600">{formatCurrency(data.current.net_salary)}</dd></div>
-              </>
-            )}
-          </dl>
-        </Card>
+        {data.current ? (
+          <PayslipBreakdown salary={data.current} historyEntry={data.history[0]} />
+        ) : (
+          <Card>
+            <CardHeader><CardTitle>Employee</CardTitle></CardHeader>
+            <dl className="space-y-2 text-sm">
+              <div className="flex justify-between"><dt className="text-gray-500">Department</dt><dd>{emp.department?.name ?? '—'}</dd></div>
+              <div className="flex justify-between"><dt className="text-gray-500">Designation</dt><dd>{emp.designation?.name ?? '—'}</dd></div>
+            </dl>
+          </Card>
+        )}
       </div>
 
       {data.history.length > 0 && (

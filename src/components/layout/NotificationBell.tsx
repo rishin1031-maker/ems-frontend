@@ -41,8 +41,8 @@ export function NotificationBell({ role, theme = 'admin' }: NotificationBellProp
 
   const accent =
     theme === 'admin'
-      ? 'text-indigo-600 dark:text-indigo-400'
-      : 'text-teal-600 dark:text-teal-400'
+      ? 'text-blue-600 dark:text-blue-400'
+      : 'text-sky-600 dark:text-sky-400'
 
   const handleMarkRead = async (id: string) => {
     await markRead.mutateAsync(id)
@@ -96,7 +96,7 @@ export function NotificationBell({ role, theme = 'admin' }: NotificationBellProp
                     onClick={() => !read && handleMarkRead(n.id)}
                     className={cn(
                       'w-full border-b border-gray-100 px-4 py-3 text-left transition-colors last:border-0 dark:border-gray-800',
-                      !read && 'bg-indigo-50/50 dark:bg-indigo-950/20',
+                      !read && 'bg-blue-50/50 dark:bg-blue-950/20',
                       'hover:bg-gray-50 dark:hover:bg-gray-800/50',
                     )}
                   >

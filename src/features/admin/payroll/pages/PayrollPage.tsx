@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { IndianRupee, Users, Clock } from 'lucide-react'
+import { IndianRupee, Users, Clock, Download } from 'lucide-react'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Input } from '@/components/ui/Input'
+import { Button } from '@/components/ui/Button'
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card'
 import { StatCard } from '@/components/layout/StatCard'
-import { PageLoader } from '@/components/ui/Spinner'
+import { ReportSkeleton } from '@/components/ui/Skeleton'
 import { ProgressBar } from '@/components/ui/ProgressBar'
 import {
   Table, TableHead, TableBody, TableRow, TableHeader, TableCell,
@@ -22,6 +23,7 @@ import {
   getSalaryNetHours,
   getSalaryTotal,
 } from '@/api/types/salary'
+import { downloadExcelCsv } from '@/lib/exportCsv'
 
 export function PayrollPage() {
   const [month, setMonth] = useState(currentMonth())
@@ -31,9 +33,42 @@ export function PayrollPage() {
   const summary = data?.summary
   const items = data?.items ?? []
 
+  const handleExport = () => {
+    downloadExcelCsv(
+      `payroll-${data?.month ?? month}.csv`,
+      ['Employee', 'Employee ID', 'Department', 'Base Salary', 'Net Hours', 'Target Hours', 'Progress %', 'Earned', 'Total Payout'],
+      items.map((row) => {
+        const hours = getSalaryNetHours(row)
+        const target = row.target_hours ?? TARGET_MONTHLY_HOURS
+        return [
+          row.employee?.name ?? row.name ?? '',
+          row.employee?.employee_id ?? row.emp_code ?? '',
+          row.employee?.department?.name ?? row.department ?? '',
+          getSalaryBase(row),
+          hours.toFixed(1),
+          target,
+          row.progress_percent ?? Math.min((hours / target) * 100, 100),
+          getSalaryEarned(row),
+          getSalaryTotal(row),
+        ]
+      }),
+    )
+  }
+
   return (
     <div>
-      <PageHeader title="Payroll Report" description="Monthly payroll summary for all employees" />
+      <PageHeader
+        title="Payroll Report"
+        description="Monthly payroll summary for all employees"
+        actions={
+          !isLoading && items.length > 0 ? (
+            <Button variant="outline" theme="admin" onClick={handleExport}>
+              <Download className="h-4 w-4" />
+              Export CSV
+            </Button>
+          ) : undefined
+        }
+      />
 
       <div className="mb-6 grid gap-4 sm:grid-cols-2 max-w-lg">
         <Input label="Month" type="month" value={month} onChange={(e) => setMonth(e.target.value)} />
@@ -41,7 +76,7 @@ export function PayrollPage() {
       </div>
 
       {isLoading ? (
-        <PageLoader />
+        <ReportSkeleton />
       ) : (
         <>
           {summary && (

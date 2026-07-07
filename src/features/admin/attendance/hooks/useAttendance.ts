@@ -34,10 +34,14 @@ export function useAttendanceCharts(params: AttendanceChartsParams) {
   })
 }
 
-export function useLiveStatus(date?: string) {
+export function useLiveStatus(
+  date?: string,
+  extra?: { search?: string; department_id?: number | string; designation_id?: number | string },
+) {
+  const params = { date, ...extra }
   return useQuery({
-    queryKey: ['admin', 'attendance', 'live-status', date],
-    queryFn: () => adminAttendanceApi.liveStatus({ date }),
+    queryKey: ['admin', 'attendance', 'live-status', params],
+    queryFn: () => adminAttendanceApi.liveStatus(params),
     refetchInterval: 30_000,
   })
 }

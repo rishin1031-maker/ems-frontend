@@ -12,6 +12,7 @@ export interface Department {
 }
 
 export interface DepartmentListParams extends PaginationParams {
+  search?: string
   status?: 'active' | 'inactive' | ''
 }
 
