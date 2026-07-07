@@ -28,6 +28,7 @@ import {
   type Leave,
 } from '@/api/types/leave'
 import { LEAVE_STATUSES, type LeaveStatus } from '@/lib/constants'
+import { LEAVE_TYPES, type LeaveType } from '@/lib/constants'
 import type { EmployeeLeaveListParams } from '@/api/employee/leaves.api'
 
 export function EmployeeLeavesPage() {
@@ -70,18 +71,30 @@ export function EmployeeLeavesPage() {
       <div className="mb-6">
         <LeaveBalanceCard balance={balance} />
       </div>
-
-      <div className="mb-6 max-w-xs">
-        <Select
-          label="Status"
-          placeholder="All statuses"
-          options={LEAVE_STATUSES.map((s) => ({ value: s, label: statusLabel(s) }))}
-          value={filters.status ?? ''}
-          onChange={(e) =>
-            setFilters({ ...filters, status: (e.target.value as LeaveStatus) || undefined, page: 1 })
-          }
-        />
-      </div>
+      <div className="flex gap-6">
+        <div className="mb-6 max-w-xl">
+          <Select
+            label="Status"
+            placeholder="All statuses"
+            options={LEAVE_STATUSES.map((s) => ({ value: s, label: statusLabel(s) }))}
+            value={filters.status ?? ''}
+            onChange={(e) =>
+              setFilters({ ...filters, status: (e.target.value as LeaveStatus) || undefined, page: 1 })
+            }
+          />
+        </div>
+        <div className="mb-6 max-w-xl">
+          <Select
+            label="Type"
+            placeholder="All Type"
+            options={LEAVE_TYPES.map((s) => ({ value: s, label: statusLabel(s) }))}
+            value={filters.status ?? ''}
+            onChange={(e) =>
+              setFilters({ ...filters, type: (e.target.value as LeaveType) || undefined, page: 1 })
+            }
+          />
+        </div>
+        </div>
 
       {isLoading ? (
         <PageLoader />
