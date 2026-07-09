@@ -81,6 +81,9 @@ const EmployeeLeavesPage = lazy(
 const ApplyLeavePage = lazy(
   () => import('@/features/employee/leaves/pages/ApplyLeavePage').then((m) => ({ default: m.ApplyLeavePage })),
 )
+const DailyChecklistPage = lazy(
+  () => import('@/features/employee/checklist/pages/DailyChecklistPage').then((m) => ({ default: m.DailyChecklistPage })),
+)
 const AdminNotificationsPage = lazy(
   () => import('@/features/notifications/pages/index').then((m) => ({ default: m.AdminNotificationsPage })),
 )
@@ -316,6 +319,14 @@ export const router = createBrowserRouter([
                 element: (
                   <Lazy>
                     <ApplyLeavePage />
+                  </Lazy>
+                ),
+              },
+              {
+                path: 'checklist',
+                element: (
+                  <Lazy>
+                    <DailyChecklistPage />
                   </Lazy>
                 ),
               },

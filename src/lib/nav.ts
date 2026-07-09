@@ -18,6 +18,7 @@ export const ROUTE_TITLES: Record<string, string> = {
   '/employee/attendance/charts': 'Work Hours',
   '/employee/leaves': 'My Leaves',
   '/employee/leaves/apply': 'Apply Leave',
+  '/employee/checklist': 'Daily Checklist',
   '/employee/profile': 'My Profile',
   '/employee/notifications': 'Notifications',
   '/employee/change-password': 'Change Password',

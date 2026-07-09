@@ -11,6 +11,7 @@ import {
   Bell,
   User,
   BarChart3,
+  CheckSquare,
 } from 'lucide-react'
 
 export interface CommandNavItem {
@@ -38,6 +39,7 @@ export const EMPLOYEE_COMMAND_NAV: CommandNavItem[] = [
   { label: 'Work Hours', to: '/employee/attendance/charts', icon: BarChart3, keywords: 'charts analytics' },
   { label: 'My Leaves', to: '/employee/leaves', icon: CalendarDays, keywords: 'time off vacation apply' },
   { label: 'Apply Leave', to: '/employee/leaves/apply', icon: CalendarDays, keywords: 'request new leave' },
+  { label: 'Daily Checklist', to: '/employee/checklist', icon: CheckSquare, keywords: 'tasks todo daily list complete' },
   { label: 'My Profile', to: '/employee/profile', icon: User, keywords: 'account settings' },
   { label: 'Notifications', to: '/employee/notifications', icon: Bell, keywords: 'alerts messages' },
 ]

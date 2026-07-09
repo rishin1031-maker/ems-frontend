@@ -17,6 +17,7 @@ import { Badge, statusToBadgeVariant } from '@/components/ui/Badge'
 import { AttendanceControls } from '@/features/employee/dashboard/components/AttendanceControls'
 import { EarlyCheckoutModal } from '@/features/employee/dashboard/components/EarlyCheckoutModal'
 import { LeaveBalanceCard } from '@/features/employee/dashboard/components/LeaveBalanceCard'
+import { TodayChecklistCard } from '@/features/employee/dashboard/components/TodayChecklistCard'
 import { EarningProgressRing } from '@/components/salary/EarningProgressRing'
 import { AttendanceStreakBadge } from '@/components/attendance/AttendanceStreakBadge'
 import { EstimatedCheckoutDisplay } from '@/components/attendance/EstimatedCheckoutDisplay'
@@ -154,6 +155,10 @@ export function EmployeeDashboardPage() {
         <ProgressBar value={netSeconds} max={targetSeconds} showTimer completeClass="bg-green-500" className="mb-5" />
         <AttendanceControls liveStats={live} onEarlyCheckout={() => setEarlyCheckoutOpen(true)} />
       </Card>
+
+      <div className="mb-6">
+        <TodayChecklistCard />
+      </div>
 
       <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {leaveStats.map((s) => (

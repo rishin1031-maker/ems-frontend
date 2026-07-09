@@ -6,6 +6,7 @@ import {
   Clock,
   BarChart3,
   CalendarDays,
+  CheckSquare,
   Bell,
 } from 'lucide-react'
 import { GlassShell } from '@/components/layout/GlassShell'
@@ -21,6 +22,7 @@ const navItems: NavItem[] = [
   { label: 'Attendance', to: '/employee/attendance', icon: Clock },
   { label: 'Work Hours', to: '/employee/attendance/charts', icon: BarChart3 },
   { label: 'My Leaves', to: '/employee/leaves', icon: CalendarDays },
+  { label: 'Daily Checklist', to: '/employee/checklist', icon: CheckSquare },
   { label: 'My Profile', to: '/employee/profile', icon: User },
   { label: 'Notifications', to: '/employee/notifications', icon: Bell },
 ]
