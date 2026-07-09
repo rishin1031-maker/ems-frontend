@@ -9,6 +9,7 @@ export interface NormalizedLiveStats {
   checked_out: boolean
   progress_percent?: number
   target_seconds?: number
+  remaining_seconds?: number
   check_in?: string | null
   check_out?: string | null
 }
@@ -72,6 +73,7 @@ export function normalizeLiveStats(raw: Record<string, unknown> | null | undefin
     checked_out: checkedOut,
     progress_percent: raw.progress_percent != null ? Number(raw.progress_percent) : undefined,
     target_seconds: raw.target_seconds != null ? Number(raw.target_seconds) : undefined,
+    remaining_seconds: raw.remaining_seconds != null ? Number(raw.remaining_seconds) : undefined,
     check_in: (raw.check_in_time as string) ?? (raw.check_in as string) ?? null,
     check_out: (raw.check_out as string) ?? null,
   }

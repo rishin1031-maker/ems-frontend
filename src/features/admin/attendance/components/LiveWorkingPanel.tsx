@@ -8,6 +8,7 @@ import { useLiveStatus } from '@/features/admin/attendance/hooks/useAttendance'
 import { useLiveTimer } from '@/hooks/useLiveTimer'
 import { useLiveBreakTimer } from '@/hooks/useLiveBreakTimer'
 import { LiveTimerDisplay } from '@/components/ui/LiveTimerDisplay'
+import { EstimatedCheckoutDisplay } from '@/components/attendance/EstimatedCheckoutDisplay'
 import { adminAttendanceApi } from '@/api/admin/attendance.api'
 import { todayISO, formatLiveTimer } from '@/lib/format'
 import { TARGET_WORK_SECONDS } from '@/lib/constants'
@@ -69,6 +70,14 @@ function LiveEmployeeCard({ item, date }: { item: LiveWorkingEmployee; date: str
       <p className="mb-3 mt-2 font-mono text-xs tabular-nums text-orange-500">
         Break {formatLiveTimer(breakSeconds)}
       </p>
+      <EstimatedCheckoutDisplay
+        netSeconds={seconds}
+        isOnBreak={item.is_on_break}
+        isComplete={item.is_complete}
+        isCheckedIn
+        compact
+        className="mb-3"
+      />
       <ProgressBar value={seconds} max={TARGET_WORK_SECONDS} showTimer={false} />
     </div>
   )

@@ -114,6 +114,8 @@ export const adminAttendanceApi = {
       total_break_seconds: Number(w.total_break_seconds ?? 0),
       is_on_break: Boolean(w.on_break),
       is_complete: Boolean(w.is_complete),
+      target_seconds: w.target_seconds != null ? Number(w.target_seconds) : undefined,
+      remaining_seconds: w.remaining_seconds != null ? Number(w.remaining_seconds) : undefined,
     }))
 
     return { date: params?.date ?? '', employees, count: raw.count ?? employees.length }

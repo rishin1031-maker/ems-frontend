@@ -109,6 +109,8 @@ export interface LiveWorkingEmployee {
   total_break_seconds?: number
   is_on_break?: boolean
   is_complete?: boolean
+  target_seconds?: number
+  remaining_seconds?: number
 }
 
 export interface LiveStatusData {

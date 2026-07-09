@@ -3,6 +3,7 @@ import { Coffee, Clock } from 'lucide-react'
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { ProgressBar } from '@/components/ui/ProgressBar'
+import { EstimatedCheckoutDisplay } from '@/components/attendance/EstimatedCheckoutDisplay'
 import { PageLoader } from '@/components/ui/Spinner'
 import { useLiveStatus } from '@/features/admin/attendance/hooks/useAttendance'
 import { useLiveTimer } from '@/hooks/useLiveTimer'
@@ -75,6 +76,14 @@ function PresenceCard({ item, date }: { item: LiveWorkingEmployee; date: string 
         {formatLiveTimer(seconds)}
       </p>
       <p className="text-[10px] text-orange-500">Break {formatLiveTimer(breakSeconds)}</p>
+      <EstimatedCheckoutDisplay
+        netSeconds={seconds}
+        isOnBreak={item.is_on_break}
+        isComplete={item.is_complete}
+        isCheckedIn
+        compact
+        className="justify-center"
+      />
       <ProgressBar value={seconds} max={TARGET_WORK_SECONDS} showTimer={false} className="w-full" />
     </div>
   )

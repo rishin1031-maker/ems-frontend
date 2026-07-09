@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
-import { Clock, Coffee, Target } from 'lucide-react'
+import { Clock, Coffee, Target, LogOut } from 'lucide-react'
 import { employeeDashboardApi } from '@/api/employee/dashboard.api'
 import { employeeAttendanceApi } from '@/api/employee/attendance.api'
 import { PageHeader } from '@/components/layout/PageHeader'
@@ -19,11 +19,13 @@ import { EarlyCheckoutModal } from '@/features/employee/dashboard/components/Ear
 import { LeaveBalanceCard } from '@/features/employee/dashboard/components/LeaveBalanceCard'
 import { EarningProgressRing } from '@/components/salary/EarningProgressRing'
 import { AttendanceStreakBadge } from '@/components/attendance/AttendanceStreakBadge'
+import { EstimatedCheckoutDisplay } from '@/components/attendance/EstimatedCheckoutDisplay'
 import { computePresentStreak } from '@/lib/attendanceHelpers'
 import { useEmployeeLiveStatus } from '@/features/employee/attendance/hooks/useEmployeeAttendance'
 import { useLiveTimer } from '@/hooks/useLiveTimer'
 import { useLiveBreakTimer } from '@/hooks/useLiveBreakTimer'
 import { formatDate, formatDuration, formatLiveTimer, statusLabel } from '@/lib/format'
+import { estimateCheckout } from '@/lib/estimatedCheckout'
 import { getLeaveBalanceRemaining } from '@/lib/liveStats'
 import { getLeaveStartDate, getLeaveEndDate, type Leave } from '@/api/types/leave'
 import { TARGET_WORK_SECONDS, LEAVE_TYPES } from '@/lib/constants'
@@ -87,6 +89,13 @@ export function EmployeeDashboardPage() {
   const netSeconds = isCheckedIn ? workDisplaySeconds : (live?.net_seconds ?? 0)
   const breakSeconds = isCheckedIn ? breakDisplaySeconds : (live?.total_break_seconds ?? live?.break_seconds ?? 0)
   const progress = live?.progress_percent ?? Math.min((netSeconds / targetSeconds) * 100, 100)
+  const checkoutEstimate = estimateCheckout({
+    netSeconds,
+    targetSeconds,
+    isOnBreak,
+    isComplete,
+    isCheckedIn: isCheckedIn && !live?.checked_out,
+  })
 
   const leaveStats = LEAVE_TYPES.map((type) => ({
     label: `${statusLabel(type)} leave left`,
@@ -116,7 +125,7 @@ export function EmployeeDashboardPage() {
         </CardHeader>
 
         {isCheckedIn && !live?.checked_out && (
-          <div className="mb-6 grid gap-3 sm:grid-cols-2">
+          <div className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <div className="rounded-xl bg-gray-50/80 px-5 py-4 dark:bg-gray-800/40">
               <LiveTimerDisplay
                 seconds={netSeconds}
@@ -132,6 +141,13 @@ export function EmployeeDashboardPage() {
                 variant="break"
               />
             </div>
+            <EstimatedCheckoutDisplay
+              netSeconds={netSeconds}
+              targetSeconds={targetSeconds}
+              isOnBreak={isOnBreak}
+              isComplete={isComplete}
+              isCheckedIn
+            />
           </div>
         )}
 
@@ -150,6 +166,15 @@ export function EmployeeDashboardPage() {
         <StatCard title="Net Work Time" value={formatLiveTimer(netSeconds)} icon={<Clock className="h-5 w-5" />} description={`Target: ${formatDuration(targetSeconds)}`} theme="employee" />
         <StatCard title="Status" value={isOnBreak ? 'On Break' : isCheckedIn ? 'Working' : live?.checked_out ? 'Checked Out' : 'Not Checked In'} icon={<Coffee className="h-5 w-5" />} theme="employee" />
         <StatCard title="Daily Target" value={`${Math.round(progress)}%`} icon={<Target className="h-5 w-5" />} description={isComplete ? 'Target reached' : '8 hours net required'} theme="employee" />
+        {checkoutEstimate.kind !== 'none' && (
+          <StatCard
+            title="Est. Check-out"
+            value={checkoutEstimate.label}
+            icon={<LogOut className="h-5 w-5" />}
+            description={checkoutEstimate.kind === 'paused' ? 'Timer paused during break' : checkoutEstimate.kind === 'complete' ? 'You can check out anytime' : 'If you keep working without breaks'}
+            theme="employee"
+          />
+        )}
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
