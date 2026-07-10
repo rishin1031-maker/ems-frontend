@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useOptimistic, useTransition } from 'react'
 import { Link } from 'react-router-dom'
 import { Check, Inbox, X } from 'lucide-react'
 import { PageHeader } from '@/components/layout/PageHeader'
@@ -16,15 +16,28 @@ import { formatDate, statusLabel } from '@/lib/format'
 import { getLeaveDays, getLeaveEndDate, getLeaveStartDate, getLeaveType } from '@/api/types/leave'
 import type { Leave } from '@/api/types/leave'
 
+type InboxAction =
+  | { type: 'approve'; ids: number[] }
+  | { type: 'reject'; ids: number[] }
+
 export function ApprovalInboxPage() {
   const [selected, setSelected] = useState<Set<number>>(new Set())
   const [page, setPage] = useState(1)
+  const [, startTransition] = useTransition()
 
-  const { data, isLoading, refetch } = useLeaves({ status: 'pending', page, per_page: 20 })
+  const { data, isLoading } = useLeaves({ status: 'pending', page, per_page: 20 })
   const { approve, reject } = useLeaveMutations()
   const { success, error: toastError } = useToast()
 
-  const items = data?.items ?? []
+  const serverItems = data?.items ?? []
+  const [optimisticItems, addOptimistic] = useOptimistic(
+    serverItems,
+    (current, action: InboxAction) => {
+      const idSet = new Set(action.ids)
+      // Pending inbox: remove actioned rows immediately
+      return current.filter((leave) => !idSet.has(leave.id))
+    },
+  )
 
   const toggle = (id: number) => {
     setSelected((prev) => {
@@ -36,24 +49,31 @@ export function ApprovalInboxPage() {
   }
 
   const toggleAll = () => {
-    if (selected.size === items.length) setSelected(new Set())
-    else setSelected(new Set(items.map((l) => l.id)))
+    if (selected.size === optimisticItems.length) setSelected(new Set())
+    else setSelected(new Set(optimisticItems.map((l) => l.id)))
   }
 
-  const bulkAction = async (action: 'approve' | 'reject') => {
+  const bulkAction = (action: 'approve' | 'reject') => {
     const ids = [...selected]
     if (ids.length === 0) return
-    try {
-      for (const id of ids) {
-        if (action === 'approve') await approve.mutateAsync({ id })
-        else await reject.mutateAsync({ id })
-      }
-      success(`${ids.length} leave request${ids.length > 1 ? 's' : ''} ${action === 'approve' ? 'approved' : 'rejected'}`)
+
+    startTransition(async () => {
+      addOptimistic({ type: action, ids })
       setSelected(new Set())
-      void refetch()
-    } catch (err) {
-      toastError((err as Error).message ?? 'Bulk action failed')
-    }
+      try {
+        for (const id of ids) {
+          if (action === 'approve') await approve.mutateAsync({ id })
+          else await reject.mutateAsync({ id })
+        }
+        success(
+          `${ids.length} leave request${ids.length > 1 ? 's' : ''} ${
+            action === 'approve' ? 'approved' : 'rejected'
+          }`,
+        )
+      } catch (err) {
+        toastError((err as Error).message ?? 'Bulk action failed')
+      }
+    })
   }
 
   const isBusy = approve.isPending || reject.isPending
@@ -81,7 +101,7 @@ export function ApprovalInboxPage() {
 
       {isLoading ? (
         <TableSkeleton rows={6} cols={6} />
-      ) : items.length === 0 ? (
+      ) : optimisticItems.length === 0 ? (
         <EmptyState
           title="Inbox zero"
           description="No pending leave requests right now."
@@ -95,7 +115,7 @@ export function ApprovalInboxPage() {
         <>
           <div className="mb-3 flex items-center gap-2 text-sm text-slate-500">
             <Inbox className="h-4 w-4" />
-            {data?.meta?.total ?? items.length} pending
+            {optimisticItems.length} pending
           </div>
           <div className="overflow-hidden rounded-2xl glass-card">
             <Table>
@@ -104,7 +124,7 @@ export function ApprovalInboxPage() {
                   <TableHeader>
                     <input
                       type="checkbox"
-                      checked={selected.size === items.length && items.length > 0}
+                      checked={selected.size === optimisticItems.length && optimisticItems.length > 0}
                       onChange={toggleAll}
                       aria-label="Select all"
                     />
@@ -117,7 +137,7 @@ export function ApprovalInboxPage() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {items.map((leave: Leave) => (
+                {optimisticItems.map((leave: Leave) => (
                   <TableRow key={leave.id}>
                     <TableCell>
                       <input

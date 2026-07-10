@@ -27,7 +27,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             'focus:outline-none focus:ring-2 focus:ring-offset-1',
             error
               ? 'border-red-500 focus:ring-red-500'
-              : 'border-slate-200 focus:ring-blue-500 dark:border-slate-700',
+              : 'focus:ring-blue-500',
             className,
           )}
           {...props}

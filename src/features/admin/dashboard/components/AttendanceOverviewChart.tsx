@@ -8,7 +8,7 @@ import {
   Tooltip,
 } from 'chart.js'
 import { Line } from 'react-chartjs-2'
-import { useTheme } from '@/hooks/useTheme'
+import { useTheme, getChartThemeColors } from '@/hooks/useTheme'
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Filler, Tooltip)
 
@@ -19,9 +19,8 @@ interface AttendanceOverviewChartProps {
 }
 
 export function AttendanceOverviewChart({ labels, values, height = 220 }: AttendanceOverviewChartProps) {
-  const { isDark } = useTheme()
-  const textColor = isDark ? '#94a3b8' : '#64748b'
-  const gridColor = isDark ? '#334155' : '#e2e8f0'
+  const { theme } = useTheme()
+  const { text: textColor, grid: gridColor } = getChartThemeColors(theme)
 
   if (!labels.length) {
     return (

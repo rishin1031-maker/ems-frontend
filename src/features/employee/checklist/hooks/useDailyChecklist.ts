@@ -11,7 +11,6 @@ export function useDailyChecklist(date?: string) {
 
 export function useDailyChecklistMutations(date?: string) {
   const qc = useQueryClient()
-  const key = ['employee', 'checklist', date ?? 'today'] as const
 
   const invalidate = () => {
     void qc.invalidateQueries({ queryKey: ['employee', 'checklist'] })
@@ -30,34 +29,6 @@ export function useDailyChecklistMutations(date?: string) {
 
   const toggle = useMutation({
     mutationFn: (id: number | string) => employeeChecklistApi.toggle(id),
-    onMutate: async (id) => {
-      await qc.cancelQueries({ queryKey: key })
-      const previous = qc.getQueryData(key)
-      qc.setQueryData(key, (old: Awaited<ReturnType<typeof employeeChecklistApi.list>> | undefined) => {
-        if (!old) return old
-        const items = old.items.map((item) =>
-          item.id === Number(id)
-            ? {
-                ...item,
-                is_completed: !item.is_completed,
-                completed_at: !item.is_completed ? new Date().toISOString() : null,
-              }
-            : item,
-        )
-        const completed = items.filter((i) => i.is_completed).length
-        return {
-          ...old,
-          items,
-          completed,
-          pending: items.length - completed,
-          total: items.length,
-        }
-      })
-      return { previous }
-    },
-    onError: (_err, _id, context) => {
-      if (context?.previous) qc.setQueryData(key, context.previous)
-    },
     onSettled: invalidate,
   })
 

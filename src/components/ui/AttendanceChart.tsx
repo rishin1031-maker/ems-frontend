@@ -11,7 +11,7 @@ import {
   Filler,
 } from 'chart.js'
 import { Bar, Line } from 'react-chartjs-2'
-import { useTheme } from '@/hooks/useTheme'
+import { useTheme, getChartThemeColors } from '@/hooks/useTheme'
 import type { AttendanceChartData } from '@/api/types/attendance'
 
 ChartJS.register(
@@ -33,10 +33,8 @@ interface AttendanceChartProps {
 }
 
 export function AttendanceChart({ data, type = 'bar', height = 280 }: AttendanceChartProps) {
-  const { isDark } = useTheme()
-
-  const textColor = isDark ? '#9ca3af' : '#6b7280'
-  const gridColor = isDark ? '#374151' : '#e5e7eb'
+  const { theme } = useTheme()
+  const { text: textColor, grid: gridColor } = getChartThemeColors(theme)
 
   const chartData = {
     labels: data.labels ?? [],

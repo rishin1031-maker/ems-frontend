@@ -18,6 +18,8 @@ import { AttendanceControls } from '@/features/employee/dashboard/components/Att
 import { EarlyCheckoutModal } from '@/features/employee/dashboard/components/EarlyCheckoutModal'
 import { LeaveBalanceCard } from '@/features/employee/dashboard/components/LeaveBalanceCard'
 import { TodayChecklistCard } from '@/features/employee/dashboard/components/TodayChecklistCard'
+import { ContinuousSessionPolicyCard } from '@/features/employee/dashboard/components/ContinuousSessionPolicyCard'
+import { ContinuousSessionBanner } from '@/features/employee/dashboard/components/ContinuousSessionBanner'
 import { EarningProgressRing } from '@/components/salary/EarningProgressRing'
 import { AttendanceStreakBadge } from '@/components/attendance/AttendanceStreakBadge'
 import { EstimatedCheckoutDisplay } from '@/components/attendance/EstimatedCheckoutDisplay'
@@ -120,36 +122,47 @@ export function EmployeeDashboardPage() {
         actions={<AttendanceStreakBadge streak={streak} />}
       />
 
+      <ContinuousSessionPolicyCard />
+
       <Card className="mb-6 overflow-hidden">
         <CardHeader className="border-b border-gray-100 pb-4 dark:border-gray-800/80">
           <CardTitle className="text-base font-medium">Today&apos;s attendance</CardTitle>
         </CardHeader>
 
         {isCheckedIn && !live?.checked_out && (
-          <div className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            <div className="rounded-xl bg-gray-50/80 px-5 py-4 dark:bg-gray-800/40">
-              <LiveTimerDisplay
-                seconds={netSeconds}
-                label="Net work"
-                status={isOnBreak ? 'On break — paused' : 'Working'}
-                variant={isOnBreak ? 'break' : 'work'}
-              />
-            </div>
-            <div className="rounded-xl bg-orange-50/50 px-5 py-4 dark:bg-orange-950/20">
-              <LiveTimerDisplay
-                seconds={breakSeconds}
-                label="Break total"
-                variant="break"
-              />
-            </div>
-            <EstimatedCheckoutDisplay
-              netSeconds={netSeconds}
-              targetSeconds={targetSeconds}
-              isOnBreak={isOnBreak}
-              isComplete={isComplete}
-              isCheckedIn
+          <>
+            <ContinuousSessionBanner
+              continuousSeconds={live?.continuous_seconds ?? 0}
+              warning={Boolean(live?.continuous_warning)}
+              inGrace={Boolean(live?.continuous_in_grace)}
+              onBreak={isOnBreak}
+              policy={live?.continuous_policy}
             />
-          </div>
+            <div className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="rounded-xl bg-gray-50/80 px-5 py-4 dark:bg-gray-800/40">
+                <LiveTimerDisplay
+                  seconds={netSeconds}
+                  label="Net work"
+                  status={isOnBreak ? 'On break — paused' : 'Working'}
+                  variant={isOnBreak ? 'break' : 'work'}
+                />
+              </div>
+              <div className="rounded-xl bg-orange-50/50 px-5 py-4 dark:bg-orange-950/20">
+                <LiveTimerDisplay
+                  seconds={breakSeconds}
+                  label="Break total"
+                  variant="break"
+                />
+              </div>
+              <EstimatedCheckoutDisplay
+                netSeconds={netSeconds}
+                targetSeconds={targetSeconds}
+                isOnBreak={isOnBreak}
+                isComplete={isComplete}
+                isCheckedIn
+              />
+            </div>
+          </>
         )}
 
         <ProgressBar value={netSeconds} max={targetSeconds} showTimer completeClass="bg-green-500" className="mb-5" />

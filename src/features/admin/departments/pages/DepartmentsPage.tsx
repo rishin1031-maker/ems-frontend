@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useOptimistic, useTransition } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Plus, Pencil, Trash2, ToggleLeft, ToggleRight } from 'lucide-react'
 import { PageHeader } from '@/components/layout/PageHeader'
@@ -31,10 +31,22 @@ export function DepartmentsPage() {
   const [formOpen, setFormOpen] = useState(false)
   const [editTarget, setEditTarget] = useState<Department | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Department | null>(null)
+  const [, startTransition] = useTransition()
 
   const { data, isLoading } = useDepartments({ page, search: search || undefined })
   const { remove, toggleStatus } = useDepartmentMutations()
   const { success, error: toastError } = useToast()
+
+  const serverItems = data?.items ?? []
+  // Use absolute status (not a toggle) so re-applying the optimistic update
+  // when React Query cache syncs does not flip the badge twice.
+  const [optimisticItems, addOptimistic] = useOptimistic(
+    serverItems,
+    (current, update: { id: number; status: Department['status'] }) =>
+      current.map((dept) =>
+        dept.id === update.id ? { ...dept, status: update.status } : dept,
+      ),
+  )
 
   useEffect(() => {
     const q = searchParams.get('search')
@@ -62,13 +74,17 @@ export function DepartmentsPage() {
     }
   }
 
-  const handleToggle = async (dept: Department) => {
-    try {
-      await toggleStatus.mutateAsync(dept.id)
-      success(`${dept.name} status updated`)
-    } catch (err) {
-      toastError((err as Error).message ?? 'Failed to toggle status')
-    }
+  const handleToggle = (dept: Department) => {
+    const nextStatus: Department['status'] = dept.status === 'active' ? 'inactive' : 'active'
+    startTransition(async () => {
+      addOptimistic({ id: dept.id, status: nextStatus })
+      try {
+        await toggleStatus.mutateAsync(dept.id)
+        success(`${dept.name} status updated`)
+      } catch (err) {
+        toastError((err as Error).message ?? 'Failed to toggle status')
+      }
+    })
   }
 
   return (
@@ -97,7 +113,7 @@ export function DepartmentsPage() {
 
       {isLoading ? (
         <PageLoader />
-      ) : !data?.items.length ? (
+      ) : !optimisticItems.length ? (
         <EmptyState action={<Button theme="admin" onClick={openCreate}>Add Department</Button>} />
       ) : (
         <>
@@ -112,7 +128,7 @@ export function DepartmentsPage() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {data.items.map((dept) => (
+              {optimisticItems.map((dept) => (
                 <TableRow key={dept.id}>
                   <TableCell className="font-medium">{dept.name}</TableCell>
                   <TableCell className="max-w-xs truncate text-gray-500">
@@ -120,7 +136,10 @@ export function DepartmentsPage() {
                   </TableCell>
                   <TableCell>{dept.employees_count ?? '—'}</TableCell>
                   <TableCell>
-                    <Badge variant={statusToBadgeVariant(dept.status)}>
+                    <Badge
+                      variant={statusToBadgeVariant(dept.status)}
+                      className="min-w-[4.75rem] justify-center"
+                    >
                       {statusLabel(dept.status)}
                     </Badge>
                   </TableCell>
@@ -153,7 +172,7 @@ export function DepartmentsPage() {
             </TableBody>
           </Table>
 
-          {data.meta && (
+          {data?.meta && (
             <div className="mt-4">
               <Pagination meta={data.meta} onPageChange={setPage} />
             </div>

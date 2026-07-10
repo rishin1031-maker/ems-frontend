@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useOptimistic, useTransition } from 'react'
 import { Plus, Pencil, Trash2, ToggleLeft, ToggleRight } from 'lucide-react'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/components/ui/Button'
@@ -29,10 +29,22 @@ export function DesignationsPage() {
   const [formOpen, setFormOpen] = useState(false)
   const [editTarget, setEditTarget] = useState<Designation | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Designation | null>(null)
+  const [, startTransition] = useTransition()
 
   const { data, isLoading } = useDesignations({ page, search: search || undefined })
   const { remove, toggleStatus } = useDesignationMutations()
   const { success, error: toastError } = useToast()
+
+  const serverItems = data?.items ?? []
+  // Use absolute status (not a toggle) so re-applying the optimistic update
+  // when React Query cache syncs does not flip the badge twice.
+  const [optimisticItems, addOptimistic] = useOptimistic(
+    serverItems,
+    (current, update: { id: number; status: Designation['status'] }) =>
+      current.map((item) =>
+        item.id === update.id ? { ...item, status: update.status } : item,
+      ),
+  )
 
   const openCreate = () => {
     setEditTarget(null)
@@ -55,13 +67,17 @@ export function DesignationsPage() {
     }
   }
 
-  const handleToggle = async (item: Designation) => {
-    try {
-      await toggleStatus.mutateAsync(item.id)
-      success(`${item.name} status updated`)
-    } catch (err) {
-      toastError((err as Error).message ?? 'Failed to toggle status')
-    }
+  const handleToggle = (item: Designation) => {
+    const nextStatus: Designation['status'] = item.status === 'active' ? 'inactive' : 'active'
+    startTransition(async () => {
+      addOptimistic({ id: item.id, status: nextStatus })
+      try {
+        await toggleStatus.mutateAsync(item.id)
+        success(`${item.name} status updated`)
+      } catch (err) {
+        toastError((err as Error).message ?? 'Failed to toggle status')
+      }
+    })
   }
 
   return (
@@ -90,7 +106,7 @@ export function DesignationsPage() {
 
       {isLoading ? (
         <PageLoader />
-      ) : !data?.items.length ? (
+      ) : !optimisticItems.length ? (
         <EmptyState action={<Button theme="admin" onClick={openCreate}>Add Designation</Button>} />
       ) : (
         <>
@@ -106,7 +122,7 @@ export function DesignationsPage() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {data.items.map((item) => (
+              {optimisticItems.map((item) => (
                 <TableRow key={item.id}>
                   <TableCell className="font-medium">{item.name}</TableCell>
                   <TableCell>{item.department_name ?? '—'}</TableCell>
@@ -115,7 +131,10 @@ export function DesignationsPage() {
                   </TableCell>
                   <TableCell>{item.employees_count ?? '—'}</TableCell>
                   <TableCell>
-                    <Badge variant={statusToBadgeVariant(item.status)}>
+                    <Badge
+                      variant={statusToBadgeVariant(item.status)}
+                      className="min-w-[4.75rem] justify-center"
+                    >
                       {statusLabel(item.status)}
                     </Badge>
                   </TableCell>
@@ -148,7 +167,7 @@ export function DesignationsPage() {
             </TableBody>
           </Table>
 
-          {data.meta && (
+          {data?.meta && (
             <div className="mt-4">
               <Pagination meta={data.meta} onPageChange={setPage} />
             </div>

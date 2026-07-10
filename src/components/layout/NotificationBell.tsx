@@ -3,11 +3,7 @@ import { Link } from 'react-router-dom'
 import { Bell, CheckCheck } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/cn'
-import {
-  useUnreadNotificationCount,
-  useNotifications,
-  useNotificationMutations,
-} from '@/features/notifications/hooks/useNotifications'
+import { useOptimisticNotifications } from '@/features/notifications/hooks/useOptimisticNotifications'
 import { isNotificationRead } from '@/api/types/notification'
 import { formatDateTime } from '@/lib/format'
 import { ROLES, type Role } from '@/lib/constants'
@@ -22,12 +18,10 @@ export function NotificationBell({ role, theme = 'admin' }: NotificationBellProp
   const ref = useRef<HTMLDivElement>(null)
   const basePath = role === ROLES.ADMIN ? '/admin/notifications' : '/employee/notifications'
 
-  const { data: count = 0 } = useUnreadNotificationCount(role)
-  const { data } = useNotifications(role, { page: 1, per_page: 8 })
-  const { markRead, markAllRead } = useNotificationMutations(role)
-
-  const items = data?.items ?? []
-  const unread = typeof count === 'number' ? count : 0
+  const { items, unread, markOneRead, markEveryRead } = useOptimisticNotifications(role, {
+    page: 1,
+    per_page: 8,
+  })
 
   useEffect(() => {
     const onClickOutside = (e: MouseEvent) => {
@@ -43,10 +37,6 @@ export function NotificationBell({ role, theme = 'admin' }: NotificationBellProp
     theme === 'admin'
       ? 'text-blue-600 dark:text-blue-400'
       : 'text-sky-600 dark:text-sky-400'
-
-  const handleMarkRead = async (id: string) => {
-    await markRead.mutateAsync(id)
-  }
 
   return (
     <div className="relative" ref={ref}>
@@ -74,7 +64,7 @@ export function NotificationBell({ role, theme = 'admin' }: NotificationBellProp
             {unread > 0 && (
               <button
                 type="button"
-                onClick={() => markAllRead.mutate()}
+                onClick={() => void markEveryRead()}
                 className={cn('flex items-center gap-1 text-xs font-medium hover:underline', accent)}
               >
                 <CheckCheck className="h-3.5 w-3.5" />
@@ -93,7 +83,9 @@ export function NotificationBell({ role, theme = 'admin' }: NotificationBellProp
                   <button
                     key={n.id}
                     type="button"
-                    onClick={() => !read && handleMarkRead(n.id)}
+                    onClick={() => {
+                      if (!read) void markOneRead(n.id)
+                    }}
                     className={cn(
                       'w-full border-b border-gray-100 px-4 py-3 text-left transition-colors last:border-0 dark:border-gray-800',
                       !read && 'bg-blue-50/50 dark:bg-blue-950/20',

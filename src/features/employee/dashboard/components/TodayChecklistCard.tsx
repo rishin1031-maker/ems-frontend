@@ -7,10 +7,7 @@ import { Input } from '@/components/ui/Input'
 import { ProgressBar } from '@/components/ui/ProgressBar'
 import { PageLoader } from '@/components/ui/Spinner'
 import { useToast } from '@/components/feedback/ToastContext'
-import {
-  useDailyChecklist,
-  useDailyChecklistMutations,
-} from '@/features/employee/checklist/hooks/useDailyChecklist'
+import { useOptimisticChecklist } from '@/features/employee/checklist/hooks/useOptimisticChecklist'
 import { todayISO } from '@/lib/format'
 import { cn } from '@/lib/cn'
 import type { DailyChecklistItem } from '@/api/types/checklist'
@@ -68,42 +65,18 @@ function DashboardTaskRow({
 export function TodayChecklistCard() {
   const date = todayISO()
   const [title, setTitle] = useState('')
-  const { data, isLoading } = useDailyChecklist(date)
-  const { create, toggle, remove } = useDailyChecklistMutations(date)
+  const { items, completed, total, isLoading, isMutating, addTask, toggleTask, deleteTask } =
+    useOptimisticChecklist(date)
   const { success, error: toastError } = useToast()
 
-  const items = data?.items ?? []
-  const total = data?.total ?? 0
-  const completed = data?.completed ?? 0
-
-  const handleAdd = async (e: FormEvent) => {
+  const handleAdd = (e: FormEvent) => {
     e.preventDefault()
     const trimmed = title.trim()
     if (!trimmed) return
-    try {
-      await create.mutateAsync({ title: trimmed, task_date: date })
-      setTitle('')
-      success('Task added')
-    } catch (err) {
-      toastError((err as Error).message ?? 'Failed to add task')
-    }
-  }
-
-  const handleToggle = async (id: number) => {
-    try {
-      await toggle.mutateAsync(id)
-    } catch (err) {
-      toastError((err as Error).message ?? 'Failed to update task')
-    }
-  }
-
-  const handleDelete = async (id: number) => {
-    try {
-      await remove.mutateAsync(id)
-      success('Task removed')
-    } catch (err) {
-      toastError((err as Error).message ?? 'Failed to remove task')
-    }
+    setTitle('')
+    void addTask(trimmed)
+      .then(() => success('Task added'))
+      .catch((err) => toastError((err as Error).message ?? 'Failed to add task'))
   }
 
   return (
@@ -140,8 +113,16 @@ export function TodayChecklistCard() {
                 <DashboardTaskRow
                   key={item.id}
                   item={item}
-                  onToggle={() => void handleToggle(item.id)}
-                  onDelete={() => void handleDelete(item.id)}
+                  onToggle={() =>
+                    void toggleTask(item.id).catch((err) =>
+                      toastError((err as Error).message ?? 'Failed to update task'),
+                    )
+                  }
+                  onDelete={() =>
+                    void deleteTask(item.id)
+                      .then(() => success('Task removed'))
+                      .catch((err) => toastError((err as Error).message ?? 'Failed to remove task'))
+                  }
                 />
               ))}
             </ul>
@@ -149,7 +130,7 @@ export function TodayChecklistCard() {
             <p className="mb-3 text-sm text-slate-500">No tasks yet — add one below.</p>
           )}
 
-          <form onSubmit={(e) => void handleAdd(e)} className="flex gap-2">
+          <form onSubmit={handleAdd} className="flex gap-2">
             <div className="min-w-0 flex-1">
               <Input
                 value={title}
@@ -163,7 +144,7 @@ export function TodayChecklistCard() {
               type="submit"
               size="sm"
               theme="employee"
-              loading={create.isPending}
+              loading={isMutating}
               disabled={!title.trim()}
             >
               <Plus className="mr-1 h-4 w-4" />

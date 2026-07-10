@@ -45,7 +45,7 @@ export function Modal({ open, onClose, title, description, children, size = 'md'
           sizes[size],
         )}
       >
-        <div className="flex items-start justify-between border-b border-white/20 px-6 py-4 dark:border-white/10">
+        <div className="flex items-start justify-between border-b border-slate-200 px-6 py-4 dark:border-slate-700">
           <div>
             <h2 id="modal-title" className="text-lg font-semibold text-gray-900 dark:text-gray-100">
               {title}

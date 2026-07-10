@@ -6,11 +6,7 @@ import { Button } from '@/components/ui/Button'
 import { Pagination } from '@/components/ui/Pagination'
 import { TableSkeleton } from '@/components/ui/Skeleton'
 import { EmptyState } from '@/components/feedback/EmptyState'
-import {
-  useNotifications,
-  useNotificationMutations,
-  useUnreadNotificationCount,
-} from '@/features/notifications/hooks/useNotifications'
+import { useOptimisticNotifications } from '@/features/notifications/hooks/useOptimisticNotifications'
 import { isNotificationRead } from '@/api/types/notification'
 import { formatDateTime } from '@/lib/format'
 import {
@@ -33,31 +29,28 @@ export function NotificationsPage({ role }: NotificationsPageProps) {
   const [params, setParams] = useState<NotificationListParams>({ page: 1, per_page: 30 })
   const theme = role === ROLES.ADMIN ? 'admin' : 'employee'
 
-  const { data, isLoading } = useNotifications(role, params)
-  const { data: unreadCount = 0 } = useUnreadNotificationCount(role)
-  const { markRead, markAllRead } = useNotificationMutations(role)
-
-  const allItems = data?.items ?? []
+  const { items, meta, unread, isLoading, isMutating, markOneRead, markEveryRead } =
+    useOptimisticNotifications(role, params)
 
   const filtered = useMemo(() => {
-    if (category === 'all') return allItems
-    return allItems.filter((n) => categorizeNotification(n) === category)
-  }, [allItems, category])
+    if (category === 'all') return items
+    return items.filter((n) => categorizeNotification(n) === category)
+  }, [items, category])
 
   const categoryCounts = useMemo(() => {
     const counts = { all: 0, leave: 0, salary: 0, system: 0 }
-    for (const n of allItems) {
+    for (const n of items) {
       if (!isNotificationRead(n)) {
         counts.all += 1
         counts[categorizeNotification(n)] += 1
       }
     }
     return counts
-  }, [allItems])
+  }, [items])
 
   const handleOpen = (id: string, url?: string) => {
     const path = resolveNotificationUrl(url)
-    markRead.mutate(id)
+    void markOneRead(id)
     if (path) navigate(path)
   }
 
@@ -66,17 +59,17 @@ export function NotificationsPage({ role }: NotificationsPageProps) {
       <PageHeader
         title="Notifications"
         description={
-          unreadCount > 0
-            ? `${unreadCount} unread notification${unreadCount === 1 ? '' : 's'}`
+          unread > 0
+            ? `${unread} unread notification${unread === 1 ? '' : 's'}`
             : 'All caught up'
         }
         actions={
-          unreadCount > 0 ? (
+          unread > 0 ? (
             <Button
               variant="outline"
               theme={theme}
-              onClick={() => markAllRead.mutate()}
-              loading={markAllRead.isPending}
+              onClick={() => void markEveryRead()}
+              loading={isMutating}
             >
               <CheckCheck className="h-4 w-4" />
               Mark all as read
@@ -173,9 +166,9 @@ export function NotificationsPage({ role }: NotificationsPageProps) {
                       theme={theme}
                       onClick={(e) => {
                         e.stopPropagation()
-                        markRead.mutate(n.id)
+                        void markOneRead(n.id)
                       }}
-                      loading={markRead.isPending}
+                      loading={isMutating}
                     >
                       Mark read
                     </Button>
@@ -185,10 +178,10 @@ export function NotificationsPage({ role }: NotificationsPageProps) {
             })}
           </div>
 
-          {category === 'all' && data?.meta && data.meta.last_page > 1 && (
+          {category === 'all' && meta && meta.last_page > 1 && (
             <div className="mt-4">
               <Pagination
-                meta={data.meta}
+                meta={meta}
                 onPageChange={(page) => setParams((p) => ({ ...p, page }))}
               />
             </div>

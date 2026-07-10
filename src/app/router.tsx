@@ -60,6 +60,9 @@ const PayrollPage = lazy(
 const ActivityLogPage = lazy(
   () => import('@/features/admin/activity-log/pages/ActivityLogPage').then((m) => ({ default: m.ActivityLogPage })),
 )
+const SystemSettingsPage = lazy(
+  () => import('@/features/admin/settings/pages/SystemSettingsPage').then((m) => ({ default: m.SystemSettingsPage })),
+)
 const ApprovalInboxPage = lazy(
   () => import('@/features/admin/inbox/pages/ApprovalInboxPage').then((m) => ({ default: m.ApprovalInboxPage })),
 )
@@ -255,6 +258,14 @@ export const router = createBrowserRouter([
                 element: (
                   <Lazy>
                     <AdminNotificationsPage />
+                  </Lazy>
+                ),
+              },
+              {
+                path: 'settings',
+                element: (
+                  <Lazy>
+                    <SystemSettingsPage />
                   </Lazy>
                 ),
               },

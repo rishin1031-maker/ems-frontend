@@ -40,11 +40,11 @@ export function getStoredRole(): Role | null {
   return getStoredAuth()?.role ?? null
 }
 
-export type Theme = 'light' | 'dark'
+export type Theme = 'light' | 'dark' | 'reading'
 
 export function getStoredTheme(): Theme {
   const stored = localStorage.getItem(THEME_STORAGE_KEY)
-  if (stored === 'dark' || stored === 'light') return stored
+  if (stored === 'dark' || stored === 'light' || stored === 'reading') return stored
   return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
 }
 

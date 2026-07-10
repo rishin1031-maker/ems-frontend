@@ -41,6 +41,7 @@ export function statusToBadgeVariant(status: string): BadgeVariant {
     case 'rejected':
     case 'absent':
     case 'inactive':
+    case 'cancelled':
       return 'danger'
     case 'half_day':
     case 'on_leave':

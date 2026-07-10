@@ -1,5 +1,7 @@
+import { useState } from 'react'
 import { useLocation } from 'react-router-dom'
-import { LogOut, Menu, Moon, Sun, ChevronDown } from 'lucide-react'
+import { useQueryClient } from '@tanstack/react-query'
+import { LogOut, Menu, Moon, Sun, BookOpen, ChevronDown, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { GlobalSearchInput } from '@/components/layout/GlobalSearchInput'
 import { NotificationBell } from '@/components/layout/NotificationBell'
@@ -39,10 +41,39 @@ export function Header({
   role = ROLES.ADMIN,
   showSearch = true,
 }: HeaderProps) {
-  const { isDark, toggleTheme } = useTheme()
+  const { theme: colorTheme, toggleTheme } = useTheme()
   const { user } = useAuth()
   const location = useLocation()
+  const queryClient = useQueryClient()
+  const [refreshing, setRefreshing] = useState(false)
   const pageTitle = resolvePageTitle(location.pathname)
+
+  const themeIcon =
+    colorTheme === 'dark' ? (
+      <BookOpen className="h-4 w-4" />
+    ) : colorTheme === 'reading' ? (
+      <Sun className="h-4 w-4" />
+    ) : (
+      <Moon className="h-4 w-4" />
+    )
+  const themeLabel =
+    colorTheme === 'dark'
+      ? 'Switch to reading mode'
+      : colorTheme === 'reading'
+        ? 'Switch to light mode'
+        : 'Switch to dark mode'
+
+  const handleRefresh = async () => {
+    if (refreshing) return
+    setRefreshing(true)
+    try {
+      await queryClient.invalidateQueries()
+      await queryClient.refetchQueries({ type: 'active' })
+    } finally {
+      // Keep the spin visible briefly so the action feels intentional
+      window.setTimeout(() => setRefreshing(false), 400)
+    }
+  }
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-4 glass-panel-strong px-4 lg:px-6">
@@ -55,7 +86,9 @@ export function Header({
         >
           <Menu className="h-5 w-5" />
         </button>
-        <h1 className="truncate text-lg font-semibold text-slate-900 dark:text-slate-100">{pageTitle}</h1>
+        <h1 key={pageTitle} className="page-title-transition truncate text-lg font-semibold text-slate-900 dark:text-slate-100">
+          {pageTitle}
+        </h1>
       </div>
 
       {showSearch && (
@@ -65,9 +98,21 @@ export function Header({
       )}
 
       <div className="ml-auto flex items-center gap-1 sm:gap-2">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => void handleRefresh()}
+          aria-label="Refresh data"
+          title="Refresh"
+          theme={theme}
+          disabled={refreshing}
+        >
+          <RefreshCw className={cn('h-4 w-4', refreshing && 'animate-spin')} />
+          <span className="hidden sm:inline">Refresh</span>
+        </Button>
         <NotificationBell role={role} theme={theme} />
-        <Button variant="ghost" size="sm" onClick={toggleTheme} aria-label="Toggle theme" theme={theme}>
-          {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+        <Button variant="ghost" size="sm" onClick={toggleTheme} aria-label={themeLabel} title={themeLabel} theme={theme}>
+          {themeIcon}
         </Button>
 
         <div className="hidden items-center gap-2 rounded-xl glass-chip px-2 py-1 sm:flex">

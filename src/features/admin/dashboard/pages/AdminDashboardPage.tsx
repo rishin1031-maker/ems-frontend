@@ -97,7 +97,8 @@ export function AdminDashboardPage() {
         </Link>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="space-y-6">
+      <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
           title="Total Employees"
           value={stats.total_employees ?? '—'}
@@ -128,7 +129,7 @@ export function AdminDashboardPage() {
         />
       </div>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-3">
+      <div className="grid gap-5 lg:grid-cols-3">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-base font-semibold">Employee Distribution</CardTitle>
@@ -175,7 +176,7 @@ export function AdminDashboardPage() {
 
       <TeamPresenceBoard title="Live team board" />
 
-      <Card className="mt-6">
+      <Card>
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <div>
             <CardTitle className="text-base font-semibold">Leave Calendar</CardTitle>
@@ -197,7 +198,7 @@ export function AdminDashboardPage() {
         )}
       </Card>
 
-      <Card padding="none" className="mt-6 overflow-hidden">
+      <Card padding="none" className="overflow-hidden">
         <CardHeader className="flex flex-row items-center justify-between border-b border-slate-100 px-6 py-4 dark:border-slate-800">
           <CardTitle className="text-base font-semibold">Recent Employees</CardTitle>
           <Link to="/admin/employees" className="text-xs font-medium text-blue-600 hover:underline">
@@ -264,7 +265,7 @@ export function AdminDashboardPage() {
       </Card>
 
       {data?.recent_leaves && data.recent_leaves.length > 0 && (
-        <Card className="mt-6">
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-base font-semibold">Recent Leave Requests</CardTitle>
             <Link to="/admin/leaves" className="text-xs font-medium text-blue-600 hover:underline">
@@ -286,6 +287,7 @@ export function AdminDashboardPage() {
           </ul>
         </Card>
       )}
+      </div>
     </div>
   )
 }

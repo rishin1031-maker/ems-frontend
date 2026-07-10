@@ -13,6 +13,7 @@ export const ROUTE_TITLES: Record<string, string> = {
   '/admin/inbox': 'Approval Inbox',
   '/admin/team': 'Team Overview',
   '/admin/notifications': 'Notifications',
+  '/admin/settings': 'System Settings',
   '/employee/dashboard': 'Dashboard',
   '/employee/attendance': 'Attendance',
   '/employee/attendance/charts': 'Work Hours',

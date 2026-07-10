@@ -9,7 +9,7 @@ export const TARGET_WORK_SECONDS = 28800 // 8 hours net
 export const TARGET_MONTHLY_HOURS = 200
 
 export const LEAVE_TYPES = ['casual', 'sick', 'annual'] as const
-export const LEAVE_STATUSES = ['pending', 'approved', 'rejected'] as const
+export const LEAVE_STATUSES = ['pending', 'approved', 'rejected', 'cancelled'] as const
 export const ATTENDANCE_STATUSES = ['present', 'absent', 'half_day', 'on_leave'] as const
 
 export type LeaveType = (typeof LEAVE_TYPES)[number]

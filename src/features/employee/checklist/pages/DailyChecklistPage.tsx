@@ -8,10 +8,7 @@ import { ProgressBar } from '@/components/ui/ProgressBar'
 import { PageLoader } from '@/components/ui/Spinner'
 import { EmptyState } from '@/components/feedback/EmptyState'
 import { useToast } from '@/components/feedback/ToastContext'
-import {
-  useDailyChecklist,
-  useDailyChecklistMutations,
-} from '@/features/employee/checklist/hooks/useDailyChecklist'
+import { useOptimisticChecklist } from '@/features/employee/checklist/hooks/useOptimisticChecklist'
 import { formatDate, todayISO } from '@/lib/format'
 import { cn } from '@/lib/cn'
 import type { DailyChecklistItem } from '@/api/types/checklist'
@@ -77,50 +74,25 @@ function ChecklistItemRow({
 export function DailyChecklistPage() {
   const [date, setDate] = useState(todayISO())
   const [title, setTitle] = useState('')
-  const { data, isLoading } = useDailyChecklist(date)
-  const { create, toggle, remove } = useDailyChecklistMutations(date)
+  const { items, completed, total, isLoading, isMutating, addTask, toggleTask, deleteTask } =
+    useOptimisticChecklist(date)
   const { success, error: toastError } = useToast()
-
-  const items = data?.items ?? []
-  const total = data?.total ?? 0
-  const completed = data?.completed ?? 0
   const isToday = date === todayISO()
 
-  const handleAdd = async (e?: FormEvent) => {
+  const handleAdd = (e?: FormEvent) => {
     e?.preventDefault()
     const trimmed = title.trim()
     if (!trimmed) return
-
-    try {
-      await create.mutateAsync({ title: trimmed, task_date: date })
-      setTitle('')
-      success('Task added')
-    } catch (err) {
-      toastError((err as Error).message ?? 'Failed to add task')
-    }
+    setTitle('')
+    void addTask(trimmed)
+      .then(() => success('Task added'))
+      .catch((err) => toastError((err as Error).message ?? 'Failed to add task'))
   }
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault()
-      void handleAdd()
-    }
-  }
-
-  const handleToggle = async (id: number) => {
-    try {
-      await toggle.mutateAsync(id)
-    } catch (err) {
-      toastError((err as Error).message ?? 'Failed to update task')
-    }
-  }
-
-  const handleDelete = async (id: number) => {
-    try {
-      await remove.mutateAsync(id)
-      success('Task removed')
-    } catch (err) {
-      toastError((err as Error).message ?? 'Failed to remove task')
+      handleAdd()
     }
   }
 
@@ -172,7 +144,7 @@ export function DailyChecklistPage() {
           </CardTitle>
         </CardHeader>
 
-        <form onSubmit={(e) => void handleAdd(e)} className="mb-4 flex gap-2">
+        <form onSubmit={handleAdd} className="mb-4 flex gap-2">
           <div className="min-w-0 flex-1">
             <Input
               value={title}
@@ -183,12 +155,7 @@ export function DailyChecklistPage() {
               aria-label="New task title"
             />
           </div>
-          <Button
-            type="submit"
-            theme="employee"
-            loading={create.isPending}
-            disabled={!title.trim()}
-          >
+          <Button type="submit" theme="employee" loading={isMutating} disabled={!title.trim()}>
             <Plus className="mr-1.5 h-4 w-4" />
             Add
           </Button>
@@ -207,9 +174,17 @@ export function DailyChecklistPage() {
               <ChecklistItemRow
                 key={item.id}
                 item={item}
-                busy={toggle.isPending || remove.isPending}
-                onToggle={() => void handleToggle(item.id)}
-                onDelete={() => void handleDelete(item.id)}
+                busy={isMutating && item.id < 0}
+                onToggle={() =>
+                  void toggleTask(item.id).catch((err) =>
+                    toastError((err as Error).message ?? 'Failed to update task'),
+                  )
+                }
+                onDelete={() =>
+                  void deleteTask(item.id)
+                    .then(() => success('Task removed'))
+                    .catch((err) => toastError((err as Error).message ?? 'Failed to remove task'))
+                }
               />
             ))}
           </ul>

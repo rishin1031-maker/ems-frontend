@@ -12,6 +12,7 @@ import {
   User,
   BarChart3,
   CheckSquare,
+  Settings,
 } from 'lucide-react'
 
 export interface CommandNavItem {
@@ -31,6 +32,7 @@ export const ADMIN_COMMAND_NAV: CommandNavItem[] = [
   { label: 'Payroll', to: '/admin/salary', icon: IndianRupee, keywords: 'salary wages pay' },
   { label: 'Payroll Report', to: '/admin/payroll', icon: FileText, keywords: 'report earnings monthly' },
   { label: 'Notifications', to: '/admin/notifications', icon: Bell, keywords: 'alerts messages' },
+  { label: 'System Settings', to: '/admin/settings', icon: Settings, keywords: 'policy continuous session auto checkout break' },
 ]
 
 export const EMPLOYEE_COMMAND_NAV: CommandNavItem[] = [

@@ -123,7 +123,7 @@ export function CommandPalette({ role }: CommandPaletteProps) {
         onClick={() => setOpen(false)}
       />
       <div className="relative w-full max-w-xl overflow-hidden rounded-2xl glass-panel-strong shadow-2xl">
-        <div className="flex items-center gap-3 border-b border-white/20 px-4 dark:border-white/10">
+        <div className="flex items-center gap-3 border-b border-slate-200 px-4 dark:border-slate-700">
           <Search className="h-4 w-4 shrink-0 text-slate-400" />
           <input
             ref={inputRef}
@@ -185,7 +185,7 @@ export function CommandPalette({ role }: CommandPaletteProps) {
           )}
         </ul>
 
-        <div className="flex items-center justify-between border-t border-white/20 px-4 py-2 text-[11px] text-slate-400 dark:border-white/10">
+        <div className="flex items-center justify-between border-t border-slate-200 px-4 py-2 text-[11px] text-slate-400 dark:border-slate-700">
           <span className="flex items-center gap-1">
             <Command className="h-3 w-3" />
             Navigate

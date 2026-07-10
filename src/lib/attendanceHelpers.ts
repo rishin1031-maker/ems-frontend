@@ -1,12 +1,25 @@
 const EARLY_CHECKOUT_PREFIX = 'Early checkout:'
+const AUTO_CHECKOUT_PREFIX = 'Auto checkout:'
 
 export function isEarlyCheckoutNote(note?: string | null): boolean {
   if (!note) return false
   return note.toLowerCase().includes('early checkout') || note.startsWith(EARLY_CHECKOUT_PREFIX)
 }
 
+export function isAutoCheckoutNote(note?: string | null): boolean {
+  if (!note) return false
+  return note.toLowerCase().includes('auto checkout') || note.startsWith(AUTO_CHECKOUT_PREFIX)
+}
+
 export function getEarlyCheckoutReason(note?: string | null): string | null {
   if (!note || !isEarlyCheckoutNote(note)) return null
+  const idx = note.indexOf(':')
+  if (idx === -1) return note
+  return note.slice(idx + 1).trim() || null
+}
+
+export function getAutoCheckoutReason(note?: string | null): string | null {
+  if (!note || !isAutoCheckoutNote(note)) return null
   const idx = note.indexOf(':')
   if (idx === -1) return note
   return note.slice(idx + 1).trim() || null

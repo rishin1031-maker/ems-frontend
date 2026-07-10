@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useOptimistic, useTransition } from 'react'
 import { Link } from 'react-router-dom'
 import { Plus, Trash2, LayoutList, CalendarDays } from 'lucide-react'
 import { PageHeader } from '@/components/layout/PageHeader'
@@ -40,6 +40,7 @@ export function EmployeeLeavesPage() {
   const [filters, setFilters] = useState<EmployeeLeaveListParams>({ page: 1, per_page: 15 })
   const [cancelTarget, setCancelTarget] = useState<Leave | null>(null)
   const [view, setView] = useState<ViewMode>('list')
+  const [, startTransition] = useTransition()
 
   const listParams = view === 'calendar'
     ? { ...filters, page: 1, per_page: 200 }
@@ -50,17 +51,29 @@ export function EmployeeLeavesPage() {
   const { cancel } = useEmployeeLeaveMutations()
   const { success, error: toastError } = useToast()
 
-  const items = data?.items ?? []
+  const serverItems = data?.items ?? []
+  const [optimisticItems, addOptimistic] = useOptimistic(
+    serverItems,
+    (current, id: number) =>
+      current.map((leave) =>
+        leave.id === id ? { ...leave, status: 'cancelled' as LeaveStatus } : leave,
+      ),
+  )
 
-  const handleCancel = async () => {
+  const handleCancel = () => {
     if (!cancelTarget) return
-    try {
-      await cancel.mutateAsync(cancelTarget.id)
-      success('Leave cancelled')
-      setCancelTarget(null)
-    } catch (err) {
-      toastError((err as Error).message ?? 'Failed to cancel leave')
-    }
+    const targetId = cancelTarget.id
+    setCancelTarget(null)
+
+    startTransition(async () => {
+      addOptimistic(targetId)
+      try {
+        await cancel.mutateAsync(targetId)
+        success('Leave cancelled')
+      } catch (err) {
+        toastError((err as Error).message ?? 'Failed to cancel leave')
+      }
+    })
   }
 
   return (
@@ -138,7 +151,7 @@ export function EmployeeLeavesPage() {
 
       {isLoading ? (
         view === 'calendar' ? <LeaveCalendarSkeleton /> : <PageLoader />
-      ) : items.length === 0 ? (
+      ) : optimisticItems.length === 0 ? (
         <EmptyState
           action={
             <Link to="/employee/leaves/apply">
@@ -147,7 +160,7 @@ export function EmployeeLeavesPage() {
           }
         />
       ) : view === 'calendar' ? (
-        <LeaveCalendarView leaves={items} theme="employee" />
+        <LeaveCalendarView leaves={optimisticItems} theme="employee" />
       ) : (
         <>
           <Table>
@@ -162,7 +175,7 @@ export function EmployeeLeavesPage() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {items.map((leave) => (
+              {optimisticItems.map((leave) => (
                 <TableRow key={leave.id}>
                   <TableCell className="capitalize">{getLeaveType(leave) ?? '—'}</TableCell>
                   <TableCell>{formatDate(getLeaveStartDate(leave))}</TableCell>

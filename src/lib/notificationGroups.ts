@@ -11,8 +11,10 @@ export const NOTIFICATION_CATEGORIES: { id: NotificationCategory | 'all'; label:
 
 export function categorizeNotification(n: Notification): NotificationCategory {
   const type = (n.type ?? '').toLowerCase()
-  if (type.includes('leave')) return 'leave'
-  if (type.includes('salary')) return 'salary'
+  const category = String((n.data as { category?: string } | undefined)?.category ?? '').toLowerCase()
+  if (type.includes('leave') || category === 'leave') return 'leave'
+  if (type.includes('salary') || category === 'salary') return 'salary'
+  if (type.includes('continuous') || category === 'attendance') return 'system'
   return 'system'
 }
 

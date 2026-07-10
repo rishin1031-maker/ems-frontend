@@ -11,16 +11,22 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantStyles = {
   primary: '',
-  secondary: 'bg-gray-100 text-gray-900 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700',
-  danger: 'bg-red-600 text-white hover:bg-red-700',
-  ghost: 'bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800',
-  outline: 'border border-gray-300 bg-transparent hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-800',
+  secondary:
+    'border border-slate-300 bg-white text-slate-800 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700',
+  danger: 'bg-red-600 text-white hover:bg-red-700 border border-red-700/20',
+  ghost:
+    'border border-transparent bg-transparent text-slate-700 hover:border-slate-200 hover:bg-white/90 dark:text-slate-200 dark:hover:border-slate-700 dark:hover:bg-slate-800/90',
+  outline:
+    'border-2 border-slate-400 bg-white text-slate-800 hover:border-slate-500 hover:bg-slate-50 dark:border-slate-500 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-slate-400 dark:hover:bg-slate-800',
 }
 
 const themePrimary = {
-  admin: 'bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600',
-  employee: 'bg-sky-600 text-white hover:bg-sky-700 dark:bg-sky-500 dark:hover:bg-sky-600',
-  neutral: 'bg-slate-900 text-white hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white',
+  admin:
+    'bg-blue-500 text-white hover:bg-blue-600 border border-blue-400/40 dark:bg-blue-500 dark:hover:bg-blue-600 dark:border-blue-400/30',
+  employee:
+    'bg-sky-500 text-white hover:bg-sky-600 border border-sky-400/40 dark:bg-sky-500 dark:hover:bg-sky-600 dark:border-sky-400/30',
+  neutral:
+    'bg-slate-800 text-white hover:bg-slate-700 border border-slate-700/30 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white dark:border-slate-300',
 }
 
 const sizes = {

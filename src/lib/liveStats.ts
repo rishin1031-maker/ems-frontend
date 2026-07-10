@@ -12,6 +12,22 @@ export interface NormalizedLiveStats {
   remaining_seconds?: number
   check_in?: string | null
   check_out?: string | null
+  continuous_seconds?: number
+  continuous_remaining_seconds?: number
+  continuous_warning?: boolean
+  continuous_in_grace?: boolean
+  continuous_policy?: {
+    enabled: boolean
+    limit_minutes: number
+    reminder_before_minutes: number
+    grace_minutes: number
+    min_break_minutes: number
+    limit_seconds: number
+    reminder_at_seconds: number
+    grace_seconds: number
+    min_break_seconds: number
+    auto_checkout_at_seconds: number
+  } | null
 }
 
 /** Merge dashboard today_attendance with calculator live_stats (API omits checked_in on stats). */
@@ -76,6 +92,15 @@ export function normalizeLiveStats(raw: Record<string, unknown> | null | undefin
     remaining_seconds: raw.remaining_seconds != null ? Number(raw.remaining_seconds) : undefined,
     check_in: (raw.check_in_time as string) ?? (raw.check_in as string) ?? null,
     check_out: (raw.check_out as string) ?? null,
+    continuous_seconds: raw.continuous_seconds != null ? Number(raw.continuous_seconds) : undefined,
+    continuous_remaining_seconds:
+      raw.continuous_remaining_seconds != null ? Number(raw.continuous_remaining_seconds) : undefined,
+    continuous_warning: Boolean(raw.continuous_warning),
+    continuous_in_grace: Boolean(raw.continuous_in_grace),
+    continuous_policy:
+      raw.continuous_policy && typeof raw.continuous_policy === 'object'
+        ? (raw.continuous_policy as NormalizedLiveStats['continuous_policy'])
+        : null,
   }
 }
 

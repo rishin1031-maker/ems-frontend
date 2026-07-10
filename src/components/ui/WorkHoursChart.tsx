@@ -8,7 +8,7 @@ import {
   Legend,
 } from 'chart.js'
 import { Bar } from 'react-chartjs-2'
-import { useTheme } from '@/hooks/useTheme'
+import { useTheme, getChartThemeColors } from '@/hooks/useTheme'
 import { formatHoursDecimal } from '@/lib/format'
 import type { WorkHoursChartData } from '@/api/types/workHoursChart'
 
@@ -20,9 +20,8 @@ interface WorkHoursChartProps {
 }
 
 export function WorkHoursChart({ data, height = 280 }: WorkHoursChartProps) {
-  const { isDark } = useTheme()
-  const textColor = isDark ? '#9ca3af' : '#6b7280'
-  const gridColor = isDark ? '#374151' : '#e5e7eb'
+  const { theme } = useTheme()
+  const { text: textColor, grid: gridColor } = getChartThemeColors(theme)
 
   const chartData = {
     labels: data.labels,

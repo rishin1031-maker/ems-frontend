@@ -49,24 +49,25 @@ export function Sidebar({
 
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-50 flex flex-col glass-panel-strong transition-all duration-200 lg:static',
+          'sticky top-0 z-50 flex h-screen shrink-0 flex-col glass-panel-strong transition-[width,transform] duration-300 ease-out',
+          'max-lg:fixed max-lg:inset-y-0 max-lg:left-0',
           collapsed ? 'w-[72px]' : 'w-64',
           open ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
         )}
       >
-        <div className={cn('flex h-16 items-center border-b border-slate-100 dark:border-slate-800', collapsed ? 'justify-center px-2' : 'gap-3 px-5')}>
+        <div className={cn('flex h-16 items-center border-b border-slate-200 transition-[padding] duration-300 dark:border-slate-700', collapsed ? 'justify-center px-2' : 'gap-3 px-5')}>
           <div className={cn('flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-xs font-bold text-white shadow-sm', logoGradient)}>
             {APP_NAME.slice(0, 2)}
           </div>
           {!collapsed && (
-            <div className="min-w-0">
+            <div className="page-title-transition min-w-0">
               <p className="truncate font-semibold leading-tight text-slate-900 dark:text-slate-100">{APP_NAME}</p>
               <p className="truncate text-[11px] text-slate-500">{APP_TAGLINE}</p>
             </div>
           )}
         </div>
 
-        <nav className="flex-1 space-y-2 overflow-y-auto p-3 scrollbar-thin">
+        <nav className="flex-1 space-y-1.5 overflow-y-auto p-3 scrollbar-thin">
           {items.map((item) => (
             <NavLink
               key={item.to}
@@ -75,7 +76,7 @@ export function Sidebar({
               title={collapsed ? item.label : undefined}
               className={({ isActive }) =>
                 cn(
-                  'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors',
+                  'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 ease-out',
                   collapsed && 'justify-center px-2',
                   isActive
                     ? activeClass
@@ -98,7 +99,7 @@ export function Sidebar({
           </div>
         )}
 
-        <div className="border-t border-slate-100 p-3 dark:border-slate-800">
+        <div className="border-t border-slate-200 p-3 dark:border-slate-700">
           <button
             type="button"
             onClick={onToggleCollapse}

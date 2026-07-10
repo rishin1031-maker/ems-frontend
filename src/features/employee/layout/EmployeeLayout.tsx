@@ -14,6 +14,7 @@ import { Header } from '@/components/layout/Header'
 import { CommandPalette } from '@/components/layout/CommandPalette'
 import { CommandPaletteProvider } from '@/components/layout/CommandPaletteContext'
 import { Sidebar, type NavItem } from '@/components/layout/Sidebar'
+import { PageTransition } from '@/components/layout/PageTransition'
 import { useAuth } from '@/features/auth/hooks/useAuth'
 import { ROLES } from '@/lib/constants'
 
@@ -44,15 +45,17 @@ export function EmployeeLayout() {
             onClose={() => setSidebarOpen(false)}
             onToggleCollapse={() => setCollapsed((v) => !v)}
           />
-          <div className="flex min-w-0 flex-1 flex-col">
+          <div className="flex min-h-screen min-w-0 flex-1 flex-col">
             <Header
               onMenuClick={() => setSidebarOpen(true)}
               onLogout={() => void logout()}
               theme="employee"
               role={ROLES.EMPLOYEE}
             />
-            <main className="flex-1 overflow-auto p-4 lg:p-8">
-              <Outlet />
+            <main className="flex-1 p-4 lg:p-8">
+              <PageTransition>
+                <Outlet />
+              </PageTransition>
             </main>
           </div>
           <CommandPalette role={ROLES.EMPLOYEE} />

@@ -1,6 +1,11 @@
-import { AlertTriangle } from 'lucide-react'
+import { AlertTriangle, ShieldAlert } from 'lucide-react'
 import { Badge } from '@/components/ui/Badge'
-import { getEarlyCheckoutReason, isEarlyCheckoutNote } from '@/lib/attendanceHelpers'
+import {
+  getAutoCheckoutReason,
+  getEarlyCheckoutReason,
+  isAutoCheckoutNote,
+  isEarlyCheckoutNote,
+} from '@/lib/attendanceHelpers'
 
 interface EarlyCheckoutBadgeProps {
   note?: string | null
@@ -9,6 +14,23 @@ interface EarlyCheckoutBadgeProps {
 }
 
 export function EarlyCheckoutBadge({ note, isComplete, netHours }: EarlyCheckoutBadgeProps) {
+  if (isAutoCheckoutNote(note)) {
+    const reason = getAutoCheckoutReason(note)
+    return (
+      <div className="mt-1.5 flex flex-wrap items-start gap-1">
+        <Badge variant="danger" className="gap-1">
+          <ShieldAlert className="h-3 w-3" />
+          Auto checkout
+        </Badge>
+        {reason && (
+          <span className="text-[11px] text-red-700 dark:text-red-400" title={reason}>
+            {reason.length > 56 ? `${reason.slice(0, 56)}…` : reason}
+          </span>
+        )}
+      </div>
+    )
+  }
+
   const isEarly = isEarlyCheckoutNote(note) || (isComplete === false && note)
   if (!isEarly && isComplete !== false) return null
 

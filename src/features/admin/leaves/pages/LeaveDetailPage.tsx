@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useOptimistic, useTransition } from 'react'
 import { useParams } from 'react-router-dom'
 import { ArrowLeft, Check, X } from 'lucide-react'
 import { PageHeader } from '@/components/layout/PageHeader'
@@ -11,37 +11,50 @@ import { ConfirmDialog } from '@/components/feedback/ConfirmDialog'
 import { useLeave, useLeaveMutations } from '@/features/admin/leaves/hooks/useLeaves'
 import { useToast } from '@/components/feedback/ToastContext'
 import { formatDate, statusLabel } from '@/lib/format'
-import { getLeaveDays, getLeaveEndDate, getLeaveStartDate, getLeaveType } from '@/api/types/leave'
+import { getLeaveDays, getLeaveEndDate, getLeaveStartDate, getLeaveType, type Leave } from '@/api/types/leave'
+import type { LeaveStatus } from '@/lib/constants'
 
 export function LeaveDetailPage() {
   const { id } = useParams<{ id: string }>()
   const { data: leave, isLoading } = useLeave(id)
   const { approve, reject } = useLeaveMutations()
   const { error: toastError } = useToast()
+  const [, startTransition] = useTransition()
 
   const [adminNote, setAdminNote] = useState('')
   const [action, setAction] = useState<'approve' | 'reject' | null>(null)
 
-  const handleAction = async () => {
+  const [optimisticLeave, addOptimistic] = useOptimistic(
+    leave ?? null,
+    (current: Leave | null, status: LeaveStatus) =>
+      current ? { ...current, status } : current,
+  )
+
+  const handleAction = () => {
     if (!id || !action) return
-    try {
-      const payload = adminNote ? { admin_note: adminNote } : undefined
-      if (action === 'approve') {
-        await approve.mutateAsync({ id, payload })
-      } else {
-        await reject.mutateAsync({ id, payload })
-      }
+    const nextStatus: LeaveStatus = action === 'approve' ? 'approved' : 'rejected'
+    const payload = adminNote ? { admin_note: adminNote } : undefined
+
+    startTransition(async () => {
+      addOptimistic(nextStatus)
       setAction(null)
-      setAdminNote('')
-    } catch (err) {
-      toastError((err as Error).message ?? 'Action failed')
-    }
+      try {
+        if (action === 'approve') {
+          await approve.mutateAsync({ id, payload })
+        } else {
+          await reject.mutateAsync({ id, payload })
+        }
+        setAdminNote('')
+      } catch (err) {
+        toastError((err as Error).message ?? 'Action failed')
+      }
+    })
   }
 
   if (isLoading) return <PageLoader />
-  if (!leave) return <p className="text-gray-500">Leave not found</p>
+  if (!optimisticLeave) return <p className="text-gray-500">Leave not found</p>
 
-  const isPending = leave.status === 'pending'
+  const isPending = optimisticLeave.status === 'pending'
 
   return (
     <div>
@@ -58,40 +71,42 @@ export function LeaveDetailPage() {
       <Card className="max-w-2xl">
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle>{leave.employee?.name ?? 'Employee'}</CardTitle>
-            <Badge variant={statusToBadgeVariant(leave.status)}>{statusLabel(leave.status)}</Badge>
+            <CardTitle>{optimisticLeave.employee?.name ?? 'Employee'}</CardTitle>
+            <Badge variant={statusToBadgeVariant(optimisticLeave.status)}>
+              {statusLabel(optimisticLeave.status)}
+            </Badge>
           </div>
         </CardHeader>
 
         <dl className="grid gap-4 sm:grid-cols-2">
           <div>
             <dt className="text-xs text-gray-500">Employee ID</dt>
-            <dd className="font-medium">{leave.employee?.employee_id ?? '—'}</dd>
+            <dd className="font-medium">{optimisticLeave.employee?.employee_id ?? '—'}</dd>
           </div>
           <div>
             <dt className="text-xs text-gray-500">Leave Type</dt>
-            <dd className="capitalize font-medium">{getLeaveType(leave) ?? '—'}</dd>
+            <dd className="capitalize font-medium">{getLeaveType(optimisticLeave) ?? '—'}</dd>
           </div>
           <div>
             <dt className="text-xs text-gray-500">Start Date</dt>
-            <dd className="font-medium">{formatDate(getLeaveStartDate(leave))}</dd>
+            <dd className="font-medium">{formatDate(getLeaveStartDate(optimisticLeave))}</dd>
           </div>
           <div>
             <dt className="text-xs text-gray-500">End Date</dt>
-            <dd className="font-medium">{formatDate(getLeaveEndDate(leave))}</dd>
+            <dd className="font-medium">{formatDate(getLeaveEndDate(optimisticLeave))}</dd>
           </div>
           <div>
             <dt className="text-xs text-gray-500">Days</dt>
-            <dd className="font-medium">{getLeaveDays(leave) ?? '—'}</dd>
+            <dd className="font-medium">{getLeaveDays(optimisticLeave) ?? '—'}</dd>
           </div>
           <div className="sm:col-span-2">
             <dt className="text-xs text-gray-500">Reason</dt>
-            <dd className="mt-1 text-sm">{leave.reason ?? '—'}</dd>
+            <dd className="mt-1 text-sm">{optimisticLeave.reason ?? '—'}</dd>
           </div>
-          {leave.admin_note && (
+          {optimisticLeave.admin_note && (
             <div className="sm:col-span-2">
               <dt className="text-xs text-gray-500">Admin Note</dt>
-              <dd className="mt-1 text-sm">{leave.admin_note}</dd>
+              <dd className="mt-1 text-sm">{optimisticLeave.admin_note}</dd>
             </div>
           )}
         </dl>
@@ -123,7 +138,7 @@ export function LeaveDetailPage() {
         onClose={() => setAction(null)}
         onConfirm={handleAction}
         title="Approve Leave"
-        description={`Approve leave request for ${leave.employee?.name}?`}
+        description={`Approve leave request for ${optimisticLeave.employee?.name}?`}
         confirmLabel="Approve"
         variant="primary"
         loading={approve.isPending}
@@ -134,7 +149,7 @@ export function LeaveDetailPage() {
         onClose={() => setAction(null)}
         onConfirm={handleAction}
         title="Reject Leave"
-        description={`Reject leave request for ${leave.employee?.name}?`}
+        description={`Reject leave request for ${optimisticLeave.employee?.name}?`}
         confirmLabel="Reject"
         loading={reject.isPending}
       />
