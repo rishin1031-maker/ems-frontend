@@ -1,5 +1,5 @@
-import { useState, useCallback } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useState, useCallback, useEffect, useRef } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { Clock, Coffee, Target, LogOut } from 'lucide-react'
 import { employeeDashboardApi } from '@/api/employee/dashboard.api'
@@ -14,6 +14,7 @@ import { LeaveCalendarSkeleton } from '@/components/ui/Skeleton'
 import { LeaveCalendarView } from '@/components/leaves/LeaveCalendarView'
 import { useEmployeeLeaves } from '@/features/employee/leaves/hooks/useEmployeeLeaves'
 import { Badge, statusToBadgeVariant } from '@/components/ui/Badge'
+import { useToast } from '@/components/feedback/ToastContext'
 import { AttendanceControls } from '@/features/employee/dashboard/components/AttendanceControls'
 import { EarlyCheckoutModal } from '@/features/employee/dashboard/components/EarlyCheckoutModal'
 import { LeaveBalanceCard } from '@/features/employee/dashboard/components/LeaveBalanceCard'
@@ -55,6 +56,9 @@ export function EmployeeDashboardPage() {
   const [earlyCheckoutOpen, setEarlyCheckoutOpen] = useState(false)
   const workPollFn = useWorkPoll()
   const breakPollFn = useBreakPoll()
+  const queryClient = useQueryClient()
+  const { error: toastError } = useToast()
+  const autoCheckoutToastShown = useRef(false)
 
   const { data, isLoading } = useQuery({
     queryKey: ['employee', 'dashboard'],
@@ -68,6 +72,14 @@ export function EmployeeDashboardPage() {
   })
 
   const { data: livePoll } = useEmployeeLiveStatus()
+
+  useEffect(() => {
+    if (!livePoll?.auto_checked_out || autoCheckoutToastShown.current) return
+    autoCheckoutToastShown.current = true
+    toastError('You were auto-checked out: continuous working session limit exceeded.')
+    void queryClient.invalidateQueries({ queryKey: ['employee', 'dashboard'] })
+    void queryClient.invalidateQueries({ queryKey: ['employee', 'attendance'] })
+  }, [livePoll?.auto_checked_out, queryClient, toastError])
 
   const live: EmployeeLiveStats | null = livePoll ?? data?.live_stats ?? null
   const targetSeconds = live?.target_seconds ?? TARGET_WORK_SECONDS

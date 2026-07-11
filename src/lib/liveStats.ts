@@ -7,6 +7,7 @@ export interface NormalizedLiveStats {
   is_on_break: boolean
   is_complete: boolean
   checked_out: boolean
+  auto_checked_out?: boolean
   progress_percent?: number
   target_seconds?: number
   remaining_seconds?: number
@@ -87,6 +88,7 @@ export function normalizeLiveStats(raw: Record<string, unknown> | null | undefin
     is_on_break: onBreak,
     is_complete: Boolean(raw.is_complete ?? raw.is_eight_hours_complete),
     checked_out: checkedOut,
+    auto_checked_out: Boolean(raw.auto_checked_out),
     progress_percent: raw.progress_percent != null ? Number(raw.progress_percent) : undefined,
     target_seconds: raw.target_seconds != null ? Number(raw.target_seconds) : undefined,
     remaining_seconds: raw.remaining_seconds != null ? Number(raw.remaining_seconds) : undefined,
